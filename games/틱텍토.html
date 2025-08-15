@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>틱택토 (CPU 대전)</title>
+  <style>
+    :root {
+      --bg: #0f1220;
+      --panel: #171a2b;
+      --accent: #6cf0c2;
+      --accent-2: #89a0ff;
+      --text: #e9eef6;
+      --muted: #9aa7bd;
+      --line: #242943;
+      --danger: #ff6b6b;
+      --warning: #ffd166;
+      --win: #2dd4bf;
+      --shadow: 0 10px 30px rgba(0,0,0,0.35);
+      --radius: 14px;
+    }
+
+    [data-theme="light"] {
+      --bg: #f6f8fc;
+      --panel: #ffffff;
+      --accent: #0bbf82;
+      --accent-2: #3b5bdb;
+      --text: #0f172a;
+      --muted: #5b6b86;
+      --line: #e6eaf1;
+      --danger: #e03131;
+      --warning: #b08900;
+      --win: #12b886;
+      --shadow: 0 8px 24px rgba(0,0,0,0.08);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: radial-gradient(1200px 800px at 80% -10%, rgba(108,240,194,0.08), transparent) , var(--bg);
+      color: var(--text);
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: min(1100px, 100%);
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 20px;
+    }
+
+    @media (max-width: 960px) {
+      .app { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.00)) , var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    header.panel {
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo {
+      width: 36px; height: 36px;
+      display: grid; place-items: center;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: white; font-weight: 800; letter-spacing: 1px;
+      box-shadow: 0 8px 22px rgba(17, 205, 239, 0.25);
+    }
+
+    h1 {
+      margin: 0; font-size: 20px;
+    }
+    .sub { color: var(--muted); font-size: 13px; }
+
+    .controls {
+      display: flex; flex-wrap: wrap; gap: 8px;
+    }
+    .control {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--line);
+      padding: 8px 10px;
+      border-radius: 10px;
+    }
+    label { font-size: 13px; color: var(--muted); }
+    select, button, .toggle {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    select:focus, button:focus, .toggle:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .toggle { display: inline-flex; gap: 8px; align-items: center; }
+    .toggle input { display: none; }
+    .toggle .dot {
+      width: 14px; height: 14px;
+      border-radius: 999px;
+      border: 2px solid var(--accent);
+      box-shadow: inset 0 0 0 6px transparent;
+      transition: box-shadow .2s ease;
+    }
+    .toggle input:checked + .dot { box-shadow: inset 0 0 0 6px var(--accent); }
+
+    .main {
+      display: grid; grid-template-rows: auto 1fr; gap: 16px;
+    }
+
+    .board.panel {
+      padding: 16px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .status {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 10px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+
+    .msg { font-weight: 700; letter-spacing: .2px; }
+    .msg .dot {
+      display: inline-block; width: 7px; height: 7px; border-radius: 99px; margin-right: 8px; background: var(--accent);
+      box-shadow: 0 0 0 3px rgba(108,240,194,0.18);
+    }
+    .msg.warn .dot { background: var(--warning); box-shadow: 0 0 0 3px rgba(255,209,102,0.25); }
+    .msg.danger .dot { background: var(--danger); box-shadow: 0 0 0 3px rgba(255,107,107,0.22); }
+    .msg.win .dot { background: var(--win); box-shadow: 0 0 0 3px rgba(45,212,191,0.22); }
+
+    .grid {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .cell {
+      display: grid; place-items: center;
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.00));
+      border: 1px dashed var(--line);
+      border-radius: 16px;
+      font-size: clamp(36px, 9vw, 56px);
+      font-weight: 800;
+      letter-spacing: 1px;
+      transition: transform .08s ease, background-color .2s ease, border-color .2s ease;
+      user-select: none;
+      position: relative;
+      color: var(--text);
+    }
+
+    .cell:hover { transform: translateY(-2px) scale(1.02); border-style: solid; }
+    .cell[data-value="X"] { color: var(--accent-2); }
+    .cell[data-value="O"] { color: var(--accent); }
+
+    .cell.win {
+      background: linear-gradient(180deg, rgba(45,212,191,0.18), rgba(45,212,191,0.00));
+      border-color: var(--win);
+      box-shadow: inset 0 0 0 2px rgba(45, 212, 191, 0.3);
+    }
+
+    .sidebar.panel {
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+      align-self: start;
+      position: sticky;
+      top: 16px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      color: var(--muted);
+      margin: 6px 0;
+    }
+
+    .score {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    }
+
+    .score .card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(255,255,255,0.04);
+    }
+    .score .label { font-size: 12px; color: var(--muted); }
+    .score .value { font-size: 22px; font-weight: 800; margin-top: 6px; }
+
+    .history {
+      display: grid; gap: 8px; max-height: 320px; overflow: auto;
+      padding-right: 4px;
+    }
+    .history .item {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      background: rgba(255,255,255,0.04);
+      display: grid; gap: 4px;
+      font-size: 13px;
+    }
+    .history .meta { color: var(--muted); font-size: 12px; }
+
+    .actions {
+      display: flex; flex-wrap: wrap; gap: 8px;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.00));
+      font-weight: 700; letter-spacing: .2px;
+    }
+    .btn.primary {
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: white;
+      box-shadow: 0 10px 22px rgba(0,0,0,0.2), 0 10px 22px rgba(59,91,219,0.2);
+    }
+    .btn.warn { color: var(--warning); border-color: var(--warning); }
+    .btn.danger { color: var(--danger); border-color: var(--danger); }
+
+    footer {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="app">
+    <header class="panel" aria-label="설정과 제목">
+      <div class="title">
+        <div class="logo" aria-hidden="true">TT</div>
+        <div>
+          <h1>틱택토 (CPU 대전)</h1>
+          <div class="sub">난이도, 선공, 말 선택을 바꿔가며 즐겨보세요</div>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="control" title="난이도">
+          <label for="level">난이도</label>
+          <select id="level" aria-label="난이도 선택">
+            <option value="easy">쉬움</option>
+            <option value="medium" selected>보통</option>
+            <option value="hard">어려움</option>
+          </select>
+        </div>
+        <div class="control" title="선공">
+          <label for="starter">선공</label>
+          <select id="starter" aria-label="선공 선택">
+            <option value="human" selected>플레이어</option>
+            <option value="cpu">CPU</option>
+          </select>
+        </div>
+        <div class="control" title="말 선택">
+          <label for="symbol">말</label>
+          <select id="symbol" aria-label="플레이어 말 선택">
+            <option value="X" selected>X</option>
+            <option value="O">O</option>
+          </select>
+        </div>
+        <label class="toggle" title="다크 모드 전환">
+          <input id="themeToggle" type="checkbox" aria-label="다크 모드" checked />
+          <span class="dot"></span>
+          <span>다크 모드</span>
+        </label>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="board panel">
+        <div id="status" class="status" role="status" aria-live="polite">
+          <div class="msg" id="message"><span class="dot"></span>당신의 차례입니다</div>
+          <div class="actions">
+            <button id="newGame" class="btn primary">새 게임</button>
+            <button id="resetScores" class="btn warn" title="점수/기록 초기화">점수 초기화</button>
+            <button id="giveUp" class="btn danger" title="현재 판 포기">포기</button>
+          </div>
+        </div>
+
+        <div class="grid" role="grid" aria-label="틱택토 보드">
+          <!-- 9칸 생성 -->
+          <button class="cell" role="gridcell" aria-label="셀 1" data-index="0"></button>
+          <button class="cell" role="gridcell" aria-label="셀 2" data-index="1"></button>
+          <button class="cell" role="gridcell" aria-label="셀 3" data-index="2"></button>
+          <button class="cell" role="gridcell" aria-label="셀 4" data-index="3"></button>
+          <button class="cell" role="gridcell" aria-label="셀 5" data-index="4"></button>
+          <button class="cell" role="gridcell" aria-label="셀 6" data-index="5"></button>
+          <button class="cell" role="gridcell" aria-label="셀 7" data-index="6"></button>
+          <button class="cell" role="gridcell" aria-label="셀 8" data-index="7"></button>
+          <button class="cell" role="gridcell" aria-label="셀 9" data-index="8"></button>
+        </div>
+      </section>
+    </main>
+
+    <aside class="sidebar panel" aria-label="점수판과 기록">
+      <div class="section-title">점수판</div>
+      <div class="score">
+        <div class="card">
+          <div class="label">플레이어 승</div>
+          <div class="value" id="scoreHuman">0</div>
+        </div>
+        <div class="card">
+          <div class="label">무승부</div>
+          <div class="value" id="scoreDraws">0</div>
+        </div>
+        <div class="card">
+          <div class="label">CPU 승</div>
+          <div class="value" id="scoreCPU">0</div>
+        </div>
+      </div>
+
+      <div class="section-title">승부 기록</div>
+      <div id="history" class="history" aria-live="polite" aria-relevant="additions"></div>
+
+      <footer>Tip: 어려움 난이도는 완벽한 수읽기(미니맥스)로 절대 지지 않습니다.</footer>
+    </aside>
+  </div>
+
+  <script>
+    // ===== 게임 상태 =====
+    const cells = Array.from(document.querySelectorAll(".cell"));
+    const statusMsg = document.getElementById("message");
+    const scoreHumanEl = document.getElementById("scoreHuman");
+    const scoreCPUel = document.getElementById("scoreCPU");
+    const scoreDrawsEl = document.getElementById("scoreDraws");
+    const historyEl = document.getElementById("history");
+
+    const levelSel = document.getElementById("level");
+    const starterSel = document.getElementById("starter");
+    const symbolSel = document.getElementById("symbol");
+    const themeToggle = document.getElementById("themeToggle");
+
+    const newGameBtn = document.getElementById("newGame");
+    const resetScoresBtn = document.getElementById("resetScores");
+    const giveUpBtn = document.getElementById("giveUp");
+
+    const WIN_LINES = [
+      [0,1,2],[3,4,5],[6,7,8], // 가로
+      [0,3,6],[1,4,7],[2,5,8], // 세로
+      [0,4,8],[2,4,6]          // 대각
+    ];
+
+    let board, human, cpu, current, locked, moves, winnerLine;
+
+    // 점수
+    const scores = { human: 0, cpu: 0, draw: 0 };
+    const gameLog = []; // 기록
+
+    // ===== 유틸 =====
+    const opposite = (p) => p === "X" ? "O" : "X";
+
+    function availableMoves(b) {
+      const arr = [];
+      for (let i=0;i<9;i++) if (!b[i]) arr.push(i);
+      return arr;
+    }
+
+    function checkWin(b, p) {
+      for (const line of WIN_LINES) {
+        const [a, c, d] = line;
+        if (b[a] === p && b[c] === p && b[d] === p) return line;
+      }
+      return null;
+    }
+
+    function isDraw(b) { return availableMoves(b).length === 0; }
+
+    // ===== 렌더링 =====
+    function renderBoard() {
+      cells.forEach((cell, i) => {
+        const val = board[i] || "";
+        cell.textContent = val;
+        cell.setAttribute("data-value", val);
+        cell.classList.toggle("win", winnerLine?.includes(i) ?? false);
+        cell.disabled = !!board[i] || locked;
+      });
+    }
+
+    function setMessage(type, text) {
+      statusMsg.classList.remove("warn","danger","win");
+      if (type) statusMsg.classList.add(type);
+      statusMsg.innerHTML = `<span class="dot"></span>${text}`;
+    }
+
+    function renderScores() {
+      scoreHumanEl.textContent = scores.human;
+      scoreCPUel.textContent = scores.cpu;
+      scoreDrawsEl.textContent = scores.draw;
+    }
+
+    function addHistoryItem(result, detail) {
+      const time = new Date();
+      const hh = String(time.getHours()).padStart(2,'0');
+      const mm = String(time.getMinutes()).padStart(2,'0');
+      const item = document.createElement("div");
+      item.className = "item";
+      item.innerHTML = `
+        <div><strong>${result}</strong></div>
+        <div class="meta">${hh}:${mm} · ${detail}</div>
+      `;
+      historyEl.prepend(item);
+    }
+
+    // ===== 미니맥스 (완벽한 수읽기) =====
+    function minimax(b, player, depth=0) {
+      // 종결 판정
+      if (checkWin(b, human)) return { score: -10 + depth };
+      if (checkWin(b, cpu))   return { score:  10 - depth };
+      if (isDraw(b))          return { score:  0 };
+
+      const moves = availableMoves(b);
+      // 플레이어가 CPU일 때 최대화, 인간일 때 최소화
+      let best = { score: player === cpu ? -Infinity : Infinity, index: null };
+
+      for (const idx of moves) {
+        b[idx] = player;
+        const evalRes = minimax(b, opposite(player), depth + 1);
+        b[idx] = null;
+
+        if (player === cpu) {
+          if (evalRes.score > best.score) best = { score: evalRes.score, index: idx };
+        } else {
+          if (evalRes.score < best.score) best = { score: evalRes.score, index: idx };
+        }
+      }
+      return best;
+    }
+
+    // 난이도에 따른 AI 수 선택
+    function chooseAIMove() {
+      const level = levelSel.value;
+      const moves = availableMoves(board);
+
+      // 쉬움: 완전 랜덤
+      if (level === "easy") {
+        return moves[Math.floor(Math.random() * moves.length)];
+      }
+
+      // 보통: 55% 미니맥스, 45% 랜덤 + 첫수 최적화
+      if (level === "medium") {
+        // 첫 수: 가운데 우선 -> 코너
+        if (moves.length === 9) return 4;
+        if (moves.length === 8 && !board[4]) return 4;
+
+        if (Math.random() < 0.55) {
+          return minimax([...board], cpu).index;
+        } else {
+          return moves[Math.floor(Math.random() * moves.length)];
+        }
+      }
+
+      // 어려움: 미니맥스
+      return minimax([...board], cpu).index;
+    }
+
+    // ===== 게임 흐름 =====
+    function applyMove(i, p) {
+      if (board[i] || locked) return false;
+      board[i] = p;
+      moves.push({ idx: i, by: p });
+      return true;
+    }
+
+    function finish(result, line=null) {
+      locked = true;
+      winnerLine = line;
+      renderBoard();
+
+      if (result === "human") {
+        scores.human++;
+        setMessage("win", "승리! 멋진 수였어요.");
+        addHistoryItem("플레이어 승", `승리 라인: ${line?.map(x=>x+1).join("-") ?? "없음"}`);
+      } else if (result === "cpu") {
+        scores.cpu++;
+        setMessage("danger", "패배! 다시 도전해볼까요?");
+        addHistoryItem("CPU 승", `CPU가 이겼습니다.`);
+      } else {
+        scores.draw++;
+        setMessage("warn", "무승부! 균형잡힌 한 판이었네요.");
+        addHistoryItem("무승부", "서로 완벽하게 막았습니다.");
+      }
+      renderScores();
+    }
+
+    function checkGameOver(lastPlayer) {
+      const line = checkWin(board, lastPlayer);
+      if (line) { finish(lastPlayer === human ? "human" : "cpu", line); return true; }
+      if (isDraw(board)) { finish("draw"); return true; }
+      return false;
+    }
+
+    async function cpuTurn() {
+      if (locked) return;
+      locked = true; // 생각 중
+      setMessage(null, "CPU가 수를 고르는 중...");
+
+      await new Promise(r => setTimeout(r, 380 + Math.random() * 220));
+
+      const idx = chooseAIMove();
+      applyMove(idx, cpu);
+      winnerLine = null;
+      locked = false;
+      renderBoard();
+
+      if (checkGameOver(cpu)) return;
+
+      current = human;
+      setMessage(null, "당신의 차례입니다");
+    }
+
+    function handleCellClick(e) {
+      const idx = Number(e.currentTarget.getAttribute("data-index"));
+      if (current !== human || locked) return;
+      if (!applyMove(idx, human)) return;
+
+      winnerLine = null;
+      renderBoard();
+
+      if (checkGameOver(human)) return;
+
+      current = cpu;
+      cpuTurn();
+    }
+
+    function startNewGame({ resetScores=false } = {}) {
+      board = Array(9).fill(null);
+      moves = [];
+      winnerLine = null;
+      locked = false;
+
+      human = symbolSel.value;
+      cpu = opposite(human);
+
+      // 선공 설정
+      const starter = starterSel.value;
+      current = starter === "human" ? human : cpu;
+
+      // UI 초기화
+      setMessage(null, current === human ? "당신의 차례입니다" : "CPU가 먼저 둡니다");
+      renderBoard();
+
+      // CPU 선공이면 즉시 한 수
+      if (current === cpu) {
+        cpuTurn();
+      }
+
+      if (resetScores) {
+        scores.human = scores.cpu = scores.draw = 0;
+        renderScores();
+        historyEl.innerHTML = "";
+      }
+    }
+
+    // ===== 이벤트 바인딩 =====
+    cells.forEach(cell => cell.addEventListener("click", handleCellClick));
+    newGameBtn.addEventListener("click", () => startNewGame());
+    resetScoresBtn.addEventListener("click", () => startNewGame({ resetScores: true }));
+
+    giveUpBtn.addEventListener("click", () => {
+      if (locked) return;
+      locked = true;
+      scores.cpu++;
+      renderScores();
+      setMessage("danger", "포기하셨습니다. 다음 판에 만나요!");
+      addHistoryItem("포기", "플레이어가 게임을 포기했습니다.");
+    });
+
+    levelSel.addEventListener("change", () => startNewGame());
+    starterSel.addEventListener("change", () => startNewGame());
+    symbolSel.addEventListener("change", () => startNewGame());
+
+    themeToggle.addEventListener("change", (e) => {
+      document.body.setAttribute("data-theme", e.target.checked ? "dark" : "light");
+    });
+
+    // 첫 시작
+    startNewGame();
+    // 미니 게임
+  </script>
+</body>
+</html>
