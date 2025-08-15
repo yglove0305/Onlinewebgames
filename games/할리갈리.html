@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>할리갈리 Pro — 브라우저 버전</title>
+<style>
+  :root{
+    --bg1:#f7f0ff; --bg2:#e8fff7;
+    --card:#ffffff; --ink:#2a2a2a;
+    --accent:#ff5a76; --accent2:#ffc857; --good:#2bb673; --bad:#e4572e;
+    --shadow:0 12px 30px rgba(0,0,0,.12);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+    color:var(--ink);
+    background: radial-gradient(1200px 600px at 20% -10%, var(--bg1), transparent),
+                radial-gradient(1200px 600px at 120% 10%, var(--bg2), transparent),
+                linear-gradient(180deg, #fff, #f8fafc);
+    min-height:100vh; display:flex; flex-direction:column; gap:16px;
+  }
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 20px; position:sticky; top:0; backdrop-filter:saturate(1.2) blur(8px);
+    background:linear-gradient(180deg, rgba(255,255,255,.85), rgba(255,255,255,.55));
+    border-bottom:1px solid rgba(0,0,0,.06); z-index:5;
+  }
+  header h1{margin:0; font-size:20px; letter-spacing:.2px}
+  .controls{display:flex; gap:8px; flex-wrap:wrap}
+  button, .chip, select, input[type="number"]{
+    border:none; padding:10px 14px; border-radius:12px; background:#fff; box-shadow:var(--shadow);
+    cursor:pointer; font-weight:600; color:#222; transition:transform .05s ease, box-shadow .2s ease, background .2s ease;
+  }
+  button:active{transform:translateY(1px)}
+  .primary{background:linear-gradient(180deg, #ff7a8f, #ff4d71); color:#fff; box-shadow:0 10px 24px rgba(255,77,113,.35)}
+  .good{background:linear-gradient(180deg, #39db92, #2bb673); color:#fff}
+  .warn{background:linear-gradient(180deg, #ffcd66, #ffb52a); color:#5a3900}
+  .ghost{background:transparent; box-shadow:none; border:1px solid rgba(0,0,0,.1)}
+  .toggle{display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; background:#fff; box-shadow:var(--shadow)}
+  .toggle input{accent-color:#2bb673}
+  main{display:grid; grid-template-columns: 280px 1fr 280px; gap:16px; padding:0 20px 24px}
+  @media (max-width:1024px){ main{grid-template-columns:1fr} .side{order:3} .right{order:2} .center{order:1} }
+  .panel{
+    background:#ffffffaa; border:1px solid rgba(0,0,0,.06); border-radius:16px; padding:14px; box-shadow:var(--shadow);
+    backdrop-filter:blur(6px);
+  }
+  .stat{display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:10px; background:#fff; margin-bottom:8px}
+  .stat b{font-size:14px}
+  .deck-count{font-variant-numeric:tabular-nums}
+  .center{display:grid; grid-template-rows:auto 1fr auto; gap:12px}
+  .board{
+    display:grid; grid-template-columns:1fr 120px 1fr; gap:12px; align-items:center; justify-items:center; min-height:320px;
+  }
+  .slot{display:grid; place-items:center; gap:8px}
+  .slot h3{margin:0; font-size:14px; opacity:.7}
+  .card{
+    width:140px; height:190px; border-radius:16px; background:var(--card); box-shadow:var(--shadow);
+    border:2px solid rgba(0,0,0,.08); display:grid; place-items:center; font-size:44px; position:relative;
+    transform-style:preserve-3d; transition:transform .5s cubic-bezier(.2,.8,.2,1);
+  }
+  .card.flip{transform:rotateY(180deg)}
+  .card .front, .card .back{
+    position:absolute; inset:0; display:grid; place-items:center; backface-visibility:hidden; border-radius:14px; padding:8px;
+  }
+  .card .back{transform:rotateY(180deg); background:repeating-linear-gradient(135deg, #ffd4dd, #ffd4dd 12px, #ffeaf0 12px, #ffeaf0 24px)}
+  .pile{
+    width:160px; height:210px; border-radius:18px; border:2px dashed rgba(0,0,0,.12); display:grid; place-items:center; position:relative;
+    background:rgba(255,255,255,.6)
+  }
+  .pile .sum{
+    position:absolute; bottom:8px; left:8px; right:8px; font-size:12px; opacity:.8; text-align:left; white-space:pre-line;
+  }
+  .bell{
+    width:110px; height:110px; border-radius:999px; background:radial-gradient(circle at 35% 30%, #fff, #ffe08a 40%, #ffcd38 70%, #ffb300);
+    box-shadow:0 12px 0 #b97b00, 0 16px 24px rgba(0,0,0,.25);
+    display:grid; place-items:center; font-size:34px; user-select:none;
+  }
+  .bell:active{transform:translateY(4px); box-shadow:0 8px 0 #b97b00, 0 8px 16px rgba(0,0,0,.25)}
+  .beltxt{font-weight:800}
+  .footer{
+    display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:center
+  }
+  #log{height:140px; overflow:auto; background:#fff; border:1px solid rgba(0,0,0,.08); border-radius:12px; padding:8px; font-size:13px}
+  .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+  .sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)}
+  .confetti{position:fixed; inset:0; pointer-events:none; overflow:hidden}
+  .confetti i{
+    position:absolute; width:10px; height:16px; border-radius:2px; opacity:.9;
+    animation:fall linear forwards;
+  }
+  @keyframes fall{
+    0%{transform:translateY(-10vh) rotate(0turn)}
+    100%{transform:translateY(110vh) rotate(2.5turn)}
+  }
+  .tip{font-size:12px; opacity:.7}
+</style>
+</head>
+<body>
+<header>
+  <h1>🍓 할리갈리 Pro</h1>
+  <div class="controls">
+    <button id="startBtn" class="primary">Start</button>
+    <button id="dealBtn" class="good">Deal (D)</button>
+    <button id="pauseBtn" class="ghost">Pause (P)</button>
+    <button id="resetBtn" class="ghost">Reset (R)</button>
+    <label class="toggle"><input type="checkbox" id="autoFlip"> 자동 뒤집기</label>
+    <label class="toggle">속도 <input type="range" id="speed" min="400" max="2400" step="200" value="1200"></label>
+  </div>
+</header>
+
+<main>
+  <section class="panel side left">
+    <div class="stat"><b>목표 합 N</b><span><input id="targetN" type="number" min="3" max="9" value="5" style="width:64px; text-align:center"></span></div>
+    <div class="stat"><b>난이도</b>
+      <span>
+        <select id="difficulty">
+          <option>Easy</option>
+          <option selected>Normal</option>
+          <option>Hard</option>
+        </select>
+      </span>
+    </div>
+    <div class="stat"><b>세트 수</b>
+      <span>
+        <select id="sets">
+          <option value="1">1</option>
+          <option value="2" selected>2</option>
+          <option value="3">3</option>
+        </select>
+      </span>
+    </div>
+    <div class="panel" style="padding:10px">
+      <b>과일 선택</b>
+      <div class="row" id="fruitPicker" style="margin-top:8px"></div>
+      <div class="tip">최소 3가지 추천. 많이 선택할수록 계산이 복잡해져요.</div>
+    </div>
+    <div class="panel" style="padding:10px">
+      <b>사운드/피드백</b>
+      <div class="row" style="margin-top:8px">
+        <label class="toggle"><input type="checkbox" id="soundOn" checked> 효과음</label>
+        <label class="toggle"><input type="checkbox" id="vibrateOn" checked> 진동</label>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel center">
+    <div class="row" aria-live="polite">
+      <div class="stat"><b>플레이어 카드</b><span class="deck-count"><span id="pCount">0</span> 장</span></div>
+      <div class="stat"><b>CPU 카드</b><span class="deck-count"><span id="cCount">0</span> 장</span></div>
+      <div class="stat"><b>테이블</b><span class="deck-count"><span id="tCount">0</span> 장</span></div>
+      <div class="stat"><b>오벨 패널티</b><span class="deck-count">3장</span></div>
+    </div>
+
+    <div class="board">
+      <div class="slot">
+        <h3>Player</h3>
+        <div id="pCard" class="card" aria-label="플레이어 카드">
+          <div class="front">?</div>
+          <div class="back"></div>
+        </div>
+      </div>
+
+      <div class="slot">
+        <div class="pile" id="pile">
+          <div>Table Pile</div>
+          <div class="sum" id="sumBox"></div>
+        </div>
+        <div class="bell" id="bell" role="button" aria-label="벨 누르기">
+          🔔
+        </div>
+        <div class="beltxt tip">Space 키로 벨</div>
+      </div>
+
+      <div class="slot">
+        <h3>CPU</h3>
+        <div id="cCard" class="card" aria-label="CPU 카드">
+          <div class="front">?</div>
+          <div class="back"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div id="log" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="panel side right">
+    <b>도움말</b>
+    <ul>
+      <li>스페이스: 벨 | D: 뒤집기/토글 | P: 일시정지 | R: 리셋</li>
+      <li>합계가 목표 \(N\)과 정확히 일치하면 벨을 누르세요.</li>
+      <li>오벨 시 패널티: 상대에게 카드 3장 양도.</li>
+      <li>자동 뒤집기는 속도를 조절할 수 있어요.</li>
+    </ul>
+  </section>
+</main>
+
+<div class="confetti" id="confetti" aria-hidden="true"></div>
+<div class="sr" id="ariaStatus" aria-live="polite"></div>
+
+<script>
+(() => {
+  // Emoji fruits and defaults
+  const ALL_FRUITS = [
+    {id:"strawberry", icon:"🍓", name:"딸기"},
+    {id:"banana",     icon:"🍌", name:"바나나"},
+    {id:"kiwi",       icon:"🥝", name:"키위"},
+    {id:"lime",       icon:"🍋", name:"라임"},
+    {id:"peach",      icon:"🍑", name:"복숭아"},
+    {id:"grape",      icon:"🍇", name:"포도"},
+    {id:"melon",      icon:"🍈", name:"멜론"}
+  ];
+
+  // State
+  const S = {
+    targetN: 5,
+    sets: 2,
+    fruits: new Set(["strawberry","banana","kiwi","lime","peach"]),
+    soundOn: true,
+    vibrateOn: true,
+    auto: false,
+    speed: 1200,
+    difficulty: "Normal",
+    running: false,
+    paused: false,
+    playerDeck: [],
+    cpuDeck: [],
+    table: [],
+    ringingWindow: false,
+    autoTimer: null,
+    lastFlipTs: 0,
+  };
+
+  // Elements
+  const el = {
+    start: byId("startBtn"),
+    deal: byId("dealBtn"),
+    pause: byId("pauseBtn"),
+    reset: byId("resetBtn"),
+    autoFlip: byId("autoFlip"),
+    speed: byId("speed"),
+    targetN: byId("targetN"),
+    sets: byId("sets"),
+    difficulty: byId("difficulty"),
+    soundOn: byId("soundOn"),
+    vibrateOn: byId("vibrateOn"),
+    fruitPicker: byId("fruitPicker"),
+    pCard: byId("pCard"),
+    cCard: byId("cCard"),
+    pile: byId("pile"),
+    sumBox: byId("sumBox"),
+    pCount: byId("pCount"),
+    cCount: byId("cCount"),
+    tCount: byId("tCount"),
+    bell: byId("bell"),
+    log: byId("log"),
+    aria: byId("ariaStatus"),
+    confetti: byId("confetti"),
+  };
+
+  // Build fruit picker
+  function buildFruitPicker(){
+    el.fruitPicker.innerHTML = "";
+    ALL_FRUITS.forEach(f=>{
+      const label = document.createElement("label");
+      label.className = "chip";
+      label.style.display="inline-flex";
+      label.style.alignItems="center";
+      label.style.gap="8px";
+      label.style.userSelect="none";
+      const cb = document.createElement("input");
+      cb.type="checkbox";
+      cb.checked = S.fruits.has(f.id);
+      cb.addEventListener("change", ()=>{
+        if(cb.checked) S.fruits.add(f.id); else S.fruits.delete(f.id);
+        saveSettings();
+      });
+      label.append(cb, document.createTextNode(` ${f.icon} ${f.name}`));
+      el.fruitPicker.append(label);
+    });
+  }
+
+  // Utilities
+  function byId(id){ return document.getElementById(id); }
+  function shuffle(a){
+    for(let i=a.length-1;i>0;i--){
+      const j = (Math.random()* (i+1))|0;
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+  function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+  function announce(msg){ el.aria.textContent = msg; }
+  function now(){ return performance.now(); }
+
+  // Audio via Web Audio API (no assets)
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  const actx = new AudioCtx();
+  function playBeep(type="bell"){
+    if(!S.soundOn) return;
+    const osc = actx.createOscillator();
+    const gain = actx.createGain();
+    osc.connect(gain).connect(actx.destination);
+    const t = actx.currentTime;
+    if(type==="flip"){ osc.type="square"; osc.frequency.setValueAtTime(420, t); }
+    else if(type==="good"){ osc.type="triangle"; osc.frequency.setValueAtTime(880, t); }
+    else if(type==="bad"){ osc.type="sawtooth"; osc.frequency.setValueAtTime(220, t); }
+    else { osc.type="sine"; osc.frequency.setValueAtTime(1200, t); }
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.2, t+0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t+0.18);
+    osc.start(t);
+    osc.stop(t+0.2);
+  }
+
+  // Vibrate helper
+  function vibe(pattern){ if(S.vibrateOn && navigator.vibrate) navigator.vibrate(pattern); }
+
+  // Confetti
+  function boomConfetti(){
+    const colors = ["#ff5a76","#ffc857","#2bb673","#3f8cff","#9b59b6"];
+    for(let i=0;i<60;i++){
+      const piece = document.createElement("i");
+      piece.style.left = Math.random()*100+"vw";
+      piece.style.background = colors[(Math.random()*colors.length)|0];
+      piece.style.animationDuration = (0.8 + Math.random()*0.9) + "s";
+      piece.style.transform = `translateY(-10vh) rotate(${Math.random()*1.5}turn)`;
+      el.confetti.append(piece);
+      setTimeout(()=> piece.remove(), 1800);
+    }
+  }
+
+  // Deck creation
+  function createDeck(){
+    const chosen = ALL_FRUITS.filter(f=>S.fruits.has(f.id));
+    const deck = [];
+    for(let s=0;s<S.sets;s++){
+      for(const f of chosen){
+        for(let count=1; count<=5; count++){
+          // 원작 분포와 다를 수 있지만, 세트 수로 조절
+          deck.push({fruit:f.icon, count});
+        }
+      }
+    }
+    return shuffle(deck);
+  }
+
+  function updateCounts(){
+    el.pCount.textContent = S.playerDeck.length;
+    el.cCount.textContent = S.cpuDeck.length;
+    el.tCount.textContent = S.table.length;
+  }
+
+  function renderCard(elCard, card){
+    const front = elCard.querySelector(".front");
+    if(!card){ front.textContent = "?"; return; }
+    front.textContent = card.fruit.repeat(card.count);
+  }
+
+  function flipAnim(elCard){
+    elCard.classList.remove("flip");
+    void elCard.offsetWidth; // reflow
+    elCard.classList.add("flip");
+    setTimeout(()=> elCard.classList.remove("flip"), 520);
+  }
+
+  function sumTable(){
+    const tally = {};
+    for(const c of S.table){
+      tally[c.fruit] = (tally[c.fruit]||0) + c.count;
+    }
+    return tally;
+  }
+
+  function drawSumBox(){
+    const tally = sumTable();
+    const lines = Object.entries(tally).map(([fruit, cnt])=>{
+      const hit = (cnt === S.targetN);
+      return `${fruit} ${cnt}${hit ? " ✅" : ""}`;
+    });
+    el.sumBox.textContent = lines.join("\n");
+  }
+
+  async function dealOnce(){
+    if(!S.running || S.paused) return;
+    if(S.ringingWindow) return; // wait
+    if(S.playerDeck.length===0 || S.cpuDeck.length===0){
+      endGame(S.playerDeck.length>0 ? "플레이어" : "CPU");
+      return;
+    }
+    const p = S.playerDeck.shift();
+    const c = S.cpuDeck.shift();
+    S.table.push(p, c);
+    renderCard(el.pCard, p);
+    renderCard(el.cCard, c);
+    flipAnim(el.pCard);
+    flipAnim(el.cCard);
+    playBeep("flip");
+    S.lastFlipTs = now();
+    updateCounts();
+    drawSumBox();
+
+    // Check ringing window
+    const tally = sumTable();
+    const canRing = Object.values(tally).some(v => v === S.targetN);
+    if(canRing){
+      S.ringingWindow = true;
+      log(`합계 ${S.targetN}! 벨을 누르세요.`);
+      cpuTryRing(); // CPU attempts based on difficulty
+    }else{
+      if(S.auto && S.running && !S.paused){
+        clearTimeout(S.autoTimer);
+        S.autoTimer = setTimeout(dealOnce, S.speed);
+      }
+    }
+  }
+
+  function cpuReactionMs(){
+    const base = S.difficulty==="Easy" ? 520 : S.difficulty==="Hard" ? 220 : 360;
+    const jitter = 60 + Math.random()*220;
+    return base + jitter;
+  }
+
+  function cpuTryRing(){
+    const delay = cpuReactionMs();
+    setTimeout(()=>{
+      if(!S.ringingWindow || S.paused || !S.running) return;
+      // If player hasn't rung yet, CPU rings
+      ring("CPU");
+    }, delay);
+  }
+
+  function givePenalty(to, count=3){
+    for(let i=0;i<count;i++){
+      const take = S.table.shift();
+      if(!take) break;
+      if(to==="Player") S.playerDeck.push(take);
+      else S.cpuDeck.push(take);
+    }
+  }
+
+  function collectTable(winner){
+    if(winner==="Player") S.playerDeck.push(...S.table);
+    else S.cpuDeck.push(...S.table);
+    S.table.length = 0;
+  }
+
+  function ring(who){
+    if(!S.running || S.paused) return;
+    // Validate
+    const valid = Object.values(sumTable()).some(v => v === S.targetN);
+    if(who==="Player"){
+      playBeep(valid ? "good" : "bad");
+      vibe(valid ? [15,30,15] : [60,40,60]);
+      bellBounce();
+    }
+    if(valid){
+      log(`${who}가 벨 성공! 🔔`);
+      announce(`${who} 성공`);
+      collectTable(who);
+      if(who==="Player") boomConfetti();
+    }else{
+      log(`${who} 오벨! 패널티 3장`);
+      announce(`${who} 오벨`);
+      const other = (who==="Player") ? "CPU" : "Player";
+      givePenalty(other, 3);
+    }
+    S.ringingWindow = false;
+    updateCounts();
+    drawSumBox();
+    // Continue flow
+    if(S.playerDeck.length===0 || S.cpuDeck.length===0){
+      endGame(S.playerDeck.length>0 ? "플레이어" : "CPU");
+      return;
+    }
+    if(S.auto && S.running && !S.paused){
+      clearTimeout(S.autoTimer);
+      S.autoTimer = setTimeout(dealOnce, S.speed);
+    }
+  }
+
+  function bellBounce(){
+    el.bell.style.transform = "translateY(4px) scale(0.96)";
+    setTimeout(()=> el.bell.style.transform="", 120);
+  }
+
+  function endGame(winner){
+    S.running = false;
+    S.paused = false;
+    clearTimeout(S.autoTimer);
+    log(`게임 종료 — ${winner} 승리! 🎉`);
+    if(winner==="플레이어") boomConfetti();
+  }
+
+  function startGame(){
+    S.running = true;
+    S.paused = false;
+    S.table = [];
+    S.playerDeck = createDeck();
+    S.cpuDeck = createDeck();
+    updateCounts();
+    renderCard(el.pCard, null);
+    renderCard(el.cCard, null);
+    drawSumBox();
+    log("새 게임 시작!");
+    if(S.auto){
+      clearTimeout(S.autoTimer);
+      S.autoTimer = setTimeout(dealOnce, 500);
+    }
+  }
+
+  function resetGame(){
+    S.running = false; S.paused=false; S.table=[];
+    clearTimeout(S.autoTimer);
+    S.playerDeck=[]; S.cpuDeck=[];
+    updateCounts();
+    renderCard(el.pCard, null); renderCard(el.cCard, null);
+    drawSumBox();
+    el.log.innerHTML = "";
+    log("리셋됨.");
+  }
+
+  // Log
+  function log(msg){
+    const time = new Date().toLocaleTimeString();
+    const line = document.createElement("div");
+    line.textContent = `[${time}] ${msg}`;
+    el.log.append(line);
+    el.log.scrollTop = el.log.scrollHeight;
+  }
+
+  // Settings persistence
+  function saveSettings(){
+    const data = {
+      targetN: S.targetN, sets: S.sets, difficulty: S.difficulty,
+      soundOn: S.soundOn, vibrateOn: S.vibrateOn, auto: S.auto, speed: S.speed,
+      fruits: Array.from(S.fruits),
+    };
+    localStorage.setItem("haligali.settings", JSON.stringify(data));
+  }
+  function loadSettings(){
+    try{
+      const raw = localStorage.getItem("haligali.settings");
+      if(!raw) return;
+      const d = JSON.parse(raw);
+      S.targetN = clamp(d.targetN ?? 5, 3, 9);
+      S.sets = clamp(d.sets ?? 2, 1, 3);
+      S.difficulty = d.difficulty ?? "Normal";
+      S.soundOn = !!d.soundOn;
+      S.vibrateOn = !!d.vibrateOn;
+      S.auto = !!d.auto;
+      S.speed = clamp(d.speed ?? 1200, 400, 2400);
+      S.fruits = new Set(Array.isArray(d.fruits) ? d.fruits : ["strawberry","banana","kiwi","lime","peach"]);
+    }catch(e){}
+  }
+  function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+
+  // Wire UI
+  function wire(){
+    el.start.addEventListener("click", startGame);
+    el.deal.addEventListener("click", ()=>{
+      if(!S.running) startGame();
+      if(S.auto){ S.auto = false; el.autoFlip.checked = false; saveSettings(); }
+      dealOnce();
+    });
+    el.pause.addEventListener("click", ()=>{
+      if(!S.running) return;
+      S.paused = !S.paused;
+      el.pause.textContent = S.paused ? "Resume (P)" : "Pause (P)";
+      if(!S.paused && S.auto){ clearTimeout(S.autoTimer); S.autoTimer = setTimeout(dealOnce, 200); }
+    });
+    el.reset.addEventListener("click", resetGame);
+    el.autoFlip.addEventListener("change", (e)=>{
+      S.auto = e.target.checked;
+      saveSettings();
+      if(S.auto && S.running && !S.paused){
+        clearTimeout(S.autoTimer); S.autoTimer = setTimeout(dealOnce, 200);
+      }else{
+        clearTimeout(S.autoTimer);
+      }
+    });
+    el.speed.addEventListener("input", e=>{
+      S.speed = parseInt(e.target.value, 10);
+      saveSettings();
+    });
+    el.targetN.addEventListener("input", e=>{
+      S.targetN = clamp(parseInt(e.target.value||"5",10), 3, 9);
+      e.target.value = S.targetN;
+      drawSumBox(); saveSettings();
+    });
+    el.sets.addEventListener("change", e=>{
+      S.sets = parseInt(e.target.value,10);
+      saveSettings();
+    });
+    el.difficulty.addEventListener("change", e=>{
+      S.difficulty = e.target.value; saveSettings();
+    });
+    el.soundOn.addEventListener("change", e=>{ S.soundOn = e.target.checked; saveSettings(); });
+    el.vibrateOn.addEventListener("change", e=>{ S.vibrateOn = e.target.checked; saveSettings(); });
+
+    // Bell
+    el.bell.addEventListener("click", ()=> ring("Player"));
+
+    // Keyboard
+    window.addEventListener("keydown", (e)=>{
+      if(e.repeat) return;
+      if(e.code==="Space"){ e.preventDefault(); ring("Player"); }
+      if(e.key==="d"||e.key==="D"){ e.preventDefault(); if(S.auto){ S.auto=false; el.autoFlip.checked=false; saveSettings(); } dealOnce(); }
+      if(e.key==="p"||e.key==="P"){ e.preventDefault(); el.pause.click(); }
+      if(e.key==="r"||e.key==="R"){ e.preventDefault(); el.reset.click(); }
+    });
+
+    // Unlock audio on first user gesture (iOS)
+    ["click","touchstart"].forEach(evt=>{
+      window.addEventListener(evt, ()=> { if(actx.state==="suspended") actx.resume(); }, {once:true});
+    });
+  }
+
+  // Init
+  function init(){
+    loadSettings();
+    // Sync UI
+    el.targetN.value = S.targetN;
+    el.sets.value = String(S.sets);
+    el.difficulty.value = S.difficulty;
+    el.soundOn.checked = S.soundOn;
+    el.vibrateOn.checked = S.vibrateOn;
+    el.autoFlip.checked = S.auto;
+    el.speed.value = S.speed;
+    buildFruitPicker();
+    updateCounts();
+    drawSumBox();
+    wire();
+    log("설정을 조정하고 Start로 시작하세요.");
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
