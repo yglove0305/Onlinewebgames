@@ -1,11 +1,56 @@
 
 
 <style>
-  a:hover {
-    background: linear-gradient(135deg, #0056b3, #0099cc);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 123, 255, 0.4);
-  }
+  /* 기본 배경과 폰트 설정 */
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f4f6f8;
+  color: #333;
+  margin: 0;
+  padding: 20px;
+  text-align: center;
+}
+
+/* 제목 스타일 */
+h1 {
+  font-size: 2.2em;
+  color: #007bff;
+  margin-bottom: 30px;
+}
+
+/* 일반 텍스트 스타일 */
+p {
+  font-size: 1.1em;
+  line-height: 1.6;
+  margin: 10px 0;
+}
+
+/* 구분선 스타일 */
+p:contains("ㅡㅡ") {
+  font-size: 1.5em;
+  color: #ccc;
+}
+
+/* 버튼 스타일 */
+a {
+  display: inline-block;
+  text-decoration: none;
+  color: #fff;
+  background: linear-gradient(135deg, #007bff, #00c6ff);
+  padding: 12px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  font-weight: bold;
+  margin: 10px;
+  transition: all 0.3s ease;
+}
+
+/* 버튼 호버 효과 */
+a:hover {
+  background: linear-gradient(135deg, #0056b3, #0099cc);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 123, 255, 0.4);
+}
 </style>
 <h1>온리인 미니 웹게임 들</h1>
 <head>
