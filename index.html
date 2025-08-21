@@ -80,6 +80,18 @@
       transform: translateY(-5px);
     }
 
+    .warning, .update-alert {
+      background-color: #ffdddd;
+      color: #d8000c;
+      padding: 15px;
+      margin: 20px auto;
+      border: 1px solid #d8000c;
+      border-radius: 8px;
+      max-width: 800px;
+      text-align: center;
+      font-weight: bold;
+    }
+
     footer {
       margin-top: 40px;
       font-size: 0.9em;
@@ -94,18 +106,6 @@
         padding: 10px 18px;
         font-size: 0.95em;
       }
-    }
-
-    .warning {
-      background-color: #ffdddd;
-      color: #d8000c;
-      padding: 15px;
-      margin: 20px auto;
-      border: 1px solid #d8000c;
-      border-radius: 8px;
-      max-width: 800px;
-      text-align: center;
-      font-weight: bold;
     }
   </style>
 </head>
@@ -131,5 +131,24 @@
 
     <footer>2025 webgames team</footer>
   </div>
+
+  <script>
+ // 날짜 기반 알림 (2025년 8월 21일 오전 10시 기준)
+      const targetDate = new Date("2025-08-21T10:00:00+09:00");
+      const now = new Date();
+
+      const hasSeenUpdate = document.cookie.includes("updateAlertShown=true");
+
+      if (now >= targetDate && !hasSeenUpdate) {
+        const updateAlert = document.createElement('div');
+        updateAlert.className = "update-alert";
+        updateAlert.textContent = "✅ 사이트가 업데이트 되었습니다!";
+        document.body.prepend(updateAlert);
+
+        // 쿠키 설정: 1일 동안 유지
+        document.cookie = "updateAlertShown=true; max-age=86400; path=/";
+      }
+    });
+  </script>
 </body>
 </html>
