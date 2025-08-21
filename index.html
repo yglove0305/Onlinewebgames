@@ -1,123 +1,147 @@
-<style>
-/* ===== 기본 레이아웃 ===== */
-body {
-  font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
-  background: linear-gradient(180deg, #f9fbfd, #e6f0ff);
-  margin: 0;
-  padding: 0;
-  color: #333;
-}
-
-/* 페이지 컨텐츠 정렬 */
-.container {
-  max-width: 800px;
-  margin: auto;
-  padding: 20px;
-  text-align: center;
-}
-
-/* ===== 제목 스타일 ===== */
-h1 {
-  font-size: 2.5em;
-  font-weight: bold;
-  color: #007bff;
-  margin: 20px 0;
-  text-shadow: 1px 1px 3px rgba(0, 123, 255, 0.2);
-}
-
-/* ===== 본문 스타일 ===== */
-p {
-  font-size: 1.1em;
-  line-height: 1.6;
-  margin-bottom: 15px;
-}
-
-.separator {
-  font-size: 1.5em;
-  color: #ccc;
-  margin: 20px 0;
-}
-
-/* ===== 버튼 공통 스타일 ===== */
-a {
-  display: inline-block;
-  text-decoration: none;
-  color: #fff;
-  background: linear-gradient(135deg, #007bff, #00c6ff);
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: bold;
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-  margin: 10px;
-  transition: all 0.3s ease;
-}
-
-/* 버튼 호버 효과 */
-a:hover {
-  background: linear-gradient(135deg, #0056b3, #0099cc);
-  transform: translateY(-3px) scale(1.03);
-  box-shadow: 0 6px 18px rgba(0, 123, 255, 0.4);
-}
-
-/* 버튼 클릭 시 */
-a:active {
-  transform: translateY(0px) scale(0.98);
-}
-
-/* ===== 카드 스타일 (게임별 박스) ===== */
-.game-card {
-  background: #fff;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.05);
-  margin-bottom: 20px;
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
-}
-
-.game-card:hover {
-  box-shadow: 0 6px 15px rgba(0,0,0,0.1);
-  transform: translateY(-5px);
-}
-
-/* ===== 반응형 디자인 ===== */
-@media (max-width: 600px) {
-  h1 {
-    font-size: 2em;
-  }
-  a {
-    padding: 10px 18px;
-    font-size: 0.95em;
-  }
-}
-
-</style>
-<h1>온리인 미니 웹게임 들</h1>
+<!DOCTYPE html>
+<html lang="ko">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>온라인 미니 웹게임</title>
   <meta property="og:image" content="https://th.bing.com/th/id/R.f5859a57a426146fba5b5d3ad2320c57?rik=%2fSnGL%2bpqSOevmw&riu=http%3a%2f%2fwww.urbanbrush.net%2fweb%2fwp-content%2fuploads%2fedd%2f2018%2f07%2fweb-20180702122005224775.png&ehk=A6yoPOWbRKTmz2csLXwp2TvaLLA0JqHQRyyB0DeKM5g%3d&risl=&pid=ImgRaw&r=0">
   <meta property="og:title" content="온라인 미니 웹게임">
   <meta property="og:description" content="미니 웹게임을 플레이 해보실수 있습니다.">
+  <style>
+    body {
+      font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+      background: linear-gradient(180deg, #f9fbfd, #e6f0ff);
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2.5em;
+      font-weight: bold;
+      color: #007bff;
+      margin: 20px 0;
+      text-shadow: 1px 1px 3px rgba(0, 123, 255, 0.2);
+    }
+
+    p {
+      font-size: 1.1em;
+      line-height: 1.6;
+      margin-bottom: 15px;
+    }
+
+    .separator {
+      font-size: 1.5em;
+      color: #ccc;
+      margin: 20px 0;
+    }
+
+    a {
+      display: inline-block;
+      text-decoration: none;
+      color: #fff;
+      background: linear-gradient(135deg, #007bff, #00c6ff);
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: bold;
+      box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+      margin: 10px;
+      transition: all 0.3s ease;
+    }
+
+    a:hover {
+      background: linear-gradient(135deg, #0056b3, #0099cc);
+      transform: translateY(-3px) scale(1.03);
+      box-shadow: 0 6px 18px rgba(0, 123, 255, 0.4);
+    }
+
+    a:active {
+      transform: translateY(0px) scale(0.98);
+    }
+
+    .game-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+      transition: box-shadow 0.3s ease, transform 0.3s ease;
+    }
+
+    .game-card:hover {
+      box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+      transform: translateY(-5px);
+    }
+
+    footer {
+      margin-top: 40px;
+      font-size: 0.9em;
+      color: #666;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 2em;
+      }
+      a {
+        padding: 10px 18px;
+        font-size: 0.95em;
+      }
+    }
+
+    .warning {
+      background-color: #ffdddd;
+      color: #d8000c;
+      padding: 15px;
+      margin: 20px auto;
+      border: 1px solid #d8000c;
+      border-radius: 8px;
+      max-width: 800px;
+      text-align: center;
+      font-weight: bold;
+    }
+  </style>
 </head>
-<p>안녕하세요. 온라인 웹게임 페이지 관리자 입니다.</p>
-<p>아래 보신 바로가기 링크들은 전부 저의 페이지 입니다.<p>
-<p>재밌게 플레이 해주셨으면 좋겠습니다. 읽어주셔서 감사합니다.</p>
+<body>
+  <div class="container">
+    <h1>온리인 미니 웹게임 들</h1>
+    <p>안녕하세요. 온라인 웹게임 페이지 관리자 입니다.</p>
+    <p>아래 보신 바로가기 링크들은 전부 저의 페이지 입니다.</p>
+    <p>재밌게 플레이 해주셨으면 좋겠습니다. 읽어주셔서 감사합니다.</p>
 
-<h2>최신 게임 소식</h2>
-<p>슈퍼마리오의 버그 가 발견 되었습니다.</p>
-<p>실시간으로 모든 게임의 버그를 수정하고 있으니 </p>
-<p>게임이 작동하지 않을수도 있습니다.</p>
-<a href="/games/할리갈리" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: white; background-color: #007bff; padding: 10px 20px; border-radius: 5px;">
-  할리갈리 게임 플레이
-</a>
-<a href="/games/틱텍토" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: white; background-color: #007bff; padding: 10px 20px; border-radius: 5px;">
-  틱텍토 게임 플레이
-</a>
-<p>ㅡㅡ</p>
-<a href="/games/돌림판" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: white; background-color: #007bff; padding: 10px 20px; border-radius: 5px;">
-  돌림판 게임 플레이
-</a>
-</a>
-<a href="/games/슈퍼마리오" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: white; background-color: #007bff; padding: 10px 20px; border-radius: 5px;">
-  슈퍼마리오 게임 플레이
-</a>
+    <h2>최신 게임 소식</h2>
+    <p>슈퍼마리오의 버그가 발견되었습니다.</p>
+    <p>실시간으로 모든 게임의 버그를 수정하고 있으니</p>
+    <p>게임이 작동하지 않을 수도 있습니다.</p>
 
-<footer>2025 webgames team</footer>
+    <div class="game-card">
+      <a href="/games/할리갈리" target="_blank" rel="noopener noreferrer">할리갈리 게임 플레이</a>
+      <a href="/games/틱텍토" target="_blank" rel="noopener noreferrer">틱텍토 게임 플레이</a>
+      <p class="separator">ㅡㅡ</p>
+      <a href="/games/돌림판" target="_blank" rel="noopener noreferrer">돌림판 게임 플레이</a>
+      <a href="/games/슈퍼마리오" target="_blank" rel="noopener noreferrer">슈퍼마리오 게임 플레이</a>
+    </div>
+
+    <footer>2025 webgames team</footer>
+  </div>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const allowedReferrer = "https://account-onlinewebgames.netlify.app";
+      if (document.referrer !== allowedReferrer) {
+        const warning = document.createElement('div');
+        warning.className = "warning";
+        warning.textContent = "⚠️ 로그인 후 이용하실 수 있습니다. account-onlinewebgames.netlify.app에서 이동해주세요.";
+        document.body.prepend(warning);
+      }
+    });
+  </script>
+</body>
+</html>
