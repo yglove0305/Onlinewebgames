@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>스피드 클릭 게임</title>
+  <style>
+    :root {
+      --bg: #0f1220;
+      --panel: #161a2e;
+      --panel-2: #1f2442;
+      --text: #e8ecff;
+      --muted: #aab1d6;
+      --accent: #7aa2ff;
+      --accent-2: #8af5c9;
+      --danger: #ff6b6b;
+      --gold: #ffd166;
+      --shadow: 0 8px 24px rgba(0,0,0,0.35);
+      --ring: 0 0 0 2px rgba(122,162,255,0.45);
+    }
+    .light {
+      --bg: #f7f8fc;
+      --panel: #ffffff;
+      --panel-2: #f1f3fb;
+      --text: #121522;
+      --muted: #58607a;
+      --accent: #3a66ff;
+      --accent-2: #1cbd8c;
+      --danger: #e44;
+      --gold: #c69300;
+      --shadow: 0 8px 24px rgba(0,0,0,0.08);
+      --ring: 0 0 0 2px rgba(58,102,255,0.3);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 600px at 10% -10%, rgba(122,162,255,0.08), transparent) no-repeat,
+                  radial-gradient(1000px 600px at 110% 0%, rgba(138,245,201,0.08), transparent) no-repeat,
+                  var(--bg);
+      color: var(--text);
+      font: 15px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Apple SD Gothic Neo, sans-serif;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+    header, footer {
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: 0.2px;
+    }
+    header .right, .controls, .hud {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    main {
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 12px;
+      padding: 0 16px 16px;
+      max-width: 1100px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    .panel {
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+    }
+    .hud, .controls, .settings {
+      padding: 12px;
+    }
+    .hud {
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .hud .group { display: flex; gap: 14px; flex-wrap: wrap; }
+    .hud .stat {
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px;
+      min-width: 110px;
+      display: grid;
+      gap: 2px;
+    }
+    .hud .stat small { color: var(--muted); font-size: 11px; }
+    .hud .stat b { font-size: 18px; letter-spacing: 0.3px; }
+    .timer {
+      display: grid;
+      gap: 6px;
+      min-width: 260px;
+    }
+    .bar {
+      height: 10px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+    }
+    .bar > span {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      transform-origin: left center;
+      transform: scaleX(1);
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: transform 0.1s linear;
+    }
+    .controls .btn, .select, .toggle, .chip {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .controls .btn.primary { background: linear-gradient(180deg, var(--accent), #5679ff); border-color: transparent; color: white; }
+    .controls .btn.warn { background: linear-gradient(180deg, #ff7a7a, #e34b4b); border-color: transparent; color: white; }
+    .controls .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .select, select {
+      background: rgba(255,255,255,0.06);
+    }
+    select {
+      padding: 8px 10px;
+      color: var(--text);
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.14);
+      outline: none;
+    }
+    .toggle {
+      user-select: none;
+    }
+    .toggle input { display: none; }
+    .toggle span {
+      width: 36px; height: 22px; border-radius: 999px;
+      background: rgba(255,255,255,0.18); position: relative; display: inline-flex; align-items: center;
+    }
+    .toggle span::after {
+      content: ""; width: 16px; height: 16px; border-radius: 50%;
+      background: white; position: absolute; left: 3px; transition: left 0.2s;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+    .toggle input:checked + span { background: var(--accent); }
+    .toggle input:checked + span::after { left: 17px; }
+    .arena {
+      position: relative;
+      min-height: 440px;
+      height: clamp(380px, 58vh, 720px);
+      overflow: hidden;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background:
+        radial-gradient(400px 280px at 80% 20%, rgba(122,162,255,0.10), transparent) no-repeat,
+        radial-gradient(420px 280px at 10% 80%, rgba(138,245,201,0.10), transparent) no-repeat,
+        linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)),
+        var(--panel);
+      box-shadow: var(--shadow);
+      outline: none;
+    }
+    .arena:focus-visible { box-shadow: var(--shadow), var(--ring); }
+    .target {
+      position: absolute;
+      width: 100px; height: 100px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.8);
+      background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.35), rgba(122,162,255,0.15) 55%, rgba(58,102,255,0.20));
+      box-shadow: 0 8px 24px rgba(58,102,255,0.35);
+      display: grid;
+      place-items: center;
+      user-select: none;
+      touch-action: none;
+      transform: translate(-50%, -50%);
+    }
+    .target::after {
+      content: "";
+      width: 44%;
+      height: 44%;
+      border-radius: 50%;
+      border: 2px dashed rgba(255,255,255,0.75);
+      background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.35), transparent 60%);
+    }
+    .pulse {
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      width: 20px; height: 20px; border-radius: 50%;
+      border: 2px solid var(--accent-2); opacity: 0.8;
+      animation: pulse 600ms ease-out forwards;
+      pointer-events: none;
+    }
+    @keyframes pulse {
+      to { transform: translate(-50%,-50%) scale(5); opacity: 0; }
+    }
+    .miss {
+      position: absolute;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      border: 2px solid var(--danger);
+      opacity: 0.8; transform: translate(-50%, -50%);
+      animation: miss 700ms ease-out forwards;
+      pointer-events: none;
+    }
+    @keyframes miss {
+      to { transform: translate(-50%,-50%) scale(4); opacity: 0; }
+    }
+    .countdown {
+      position: absolute; inset: 0;
+      display: grid; place-items: center;
+      background: rgba(0,0,0,0.35);
+      backdrop-filter: blur(4px);
+      color: white; font-weight: 900; font-size: 72px;
+      letter-spacing: 1px;
+      z-index: 2;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .countdown.show { opacity: 1; pointer-events: auto; }
+    .toast-wrap {
+      position: absolute; inset: auto 12px 12px auto;
+      display: grid; gap: 8px; z-index: 3;
+    }
+    .toast {
+      padding: 8px 12px;
+      background: rgba(0,0,0,0.55);
+      color: white; border-radius: 8px;
+      font-weight: 700; letter-spacing: 0.3px;
+      animation: toast 1.2s ease forwards;
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+    @keyframes toast {
+      0% { transform: translateY(10px); opacity: 0; }
+      10% { transform: translateY(0); opacity: 1; }
+      90% { opacity: 1; }
+      100% { opacity: 0; transform: translateY(-6px); }
+    }
+    .settings {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .setting {
+      display: grid; gap: 8px;
+      padding: 12px; border-radius: 10px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .setting label { font-weight: 700; font-size: 13px; color: var(--muted); }
+    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    input[type="range"] {
+      width: 100%; accent-color: var(--accent);
+    }
+    .kbd {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.18); font-size: 12px;
+    }
+    footer {
+      color: var(--muted); font-size: 12px; justify-content: center;
+      gap: 10px; padding-bottom: 18px;
+    }
+    /* 작은 화면 대응 */
+    @media (max-width: 760px) {
+      .settings { grid-template-columns: 1fr; }
+      .hud { grid-template-columns: 1fr; }
+      .timer { min-width: 100%; }
+      .arena { height: 54vh; min-height: 360px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>⚡ 스피드 클릭 게임</h1>
+    <div class="right">
+      <label class="toggle" title="라이트/다크 테마">
+        <input id="themeToggle" type="checkbox" />
+        <span></span>
+      </label>
+      <span style="color:var(--muted);font-weight:700;">테마</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="hud panel" aria-label="게임 정보">
+      <div class="group">
+        <div class="stat">
+          <small>모드</small>
+          <b id="hudMode">클래식</b>
+        </div>
+        <div class="stat">
+          <small>지속시간</small>
+          <b><span id="hudDuration">30</span>초</b>
+        </div>
+        <div class="stat">
+          <small>최고점수</small>
+          <b id="hudBest">0</b>
+        </div>
+      </div>
+      <div class="timer" aria-label="타이머">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <span style="color:var(--muted);font-weight:700;">남은 시간</span>
+          <span style="font-weight:900;" id="timeLeft">30.0s</span>
+        </div>
+        <div class="bar"><span id="barFill"></span></div>
+      </div>
+      <div class="group">
+        <div class="stat">
+          <small>점수</small>
+          <b id="score">0</b>
+        </div>
+        <div class="stat">
+          <small>CPS</small>
+          <b id="cps">0.00</b>
+        </div>
+        <div class="stat">
+          <small>연속 / 배수</small>
+          <b><span id="streak">0</span> / <span id="mult">1x</span></b>
+        </div>
+        <div class="stat">
+          <small>빗나감</small>
+          <b id="misses">0</b>
+        </div>
+      </div>
+    </section>
+
+    <section class="controls panel" aria-label="게임 컨트롤">
+      <button id="startBtn" class="btn primary">▶ 시작</button>
+      <button id="pauseBtn" class="btn" disabled>⏸ 일시정지</button>
+      <button id="resetBtn" class="btn warn" disabled>↺ 재시작</button>
+
+      <div style="flex:1"></div>
+
+      <label class="row">
+        <span style="color:var(--muted);font-weight:700;">모드</span>
+        <select id="modeSel">
+          <option value="classic">클래식</option>
+          <option value="target">타깃</option>
+          <option value="burst">버스트</option>
+          <option value="precision">정밀</option>
+        </select>
+      </label>
+
+      <label class="row">
+        <span style="color:var(--muted);font-weight:700;">시간</span>
+        <select id="durSel">
+          <option value="10">10초</option>
+          <option value="20">20초</option>
+          <option value="30" selected>30초</option>
+          <option value="60">60초</option>
+        </select>
+      </label>
+
+      <label class="toggle" title="사운드 On/Off">
+        <input id="soundToggle" type="checkbox" checked />
+        <span></span>
+      </label>
+      <span style="color:var(--muted);font-weight:700;">사운드</span>
+    </section>
+
+    <section id="arena" class="arena panel" tabindex="0" aria-live="polite" aria-label="게임 영역">
+      <div id="countdown" class="countdown">3</div>
+      <div class="toast-wrap" id="toasts" aria-live="polite"></div>
+      <div id="target" class="target" role="button" aria-label="타깃" hidden></div>
+    </section>
+
+    <section class="settings panel" aria-label="설정">
+      <div class="setting">
+        <label>타깃 크기</label>
+        <div class="row">
+          <input id="sizeRange" type="range" min="40" max="160" step="5" value="100" />
+          <span><b id="sizeVal">100</b> px</span>
+        </div>
+        <small style="color:var(--muted);">버스트/정밀 모드에서는 더 작은/큰 기본값이 적용될 수 있어요.</small>
+      </div>
+
+      <div class="setting">
+        <label>이동 속도</label>
+        <div class="row">
+          <input id="speedRange" type="range" min="300" max="1800" step="50" value="900" />
+          <span>매 <b id="speedVal">900</b> ms 이동</span>
+        </div>
+        <small style="color:var(--muted);">숫자가 작을수록 더 자주 움직입니다.</small>
+      </div>
+
+      <div class="setting">
+        <label>패널티/옵션</label>
+        <div class="row">
+          <label class="toggle"><input id="missPenalty" type="checkbox" checked /><span></span></label>
+          <span>빗나가면 연속/배수 초기화</span>
+        </div>
+        <div class="row">
+          <label class="toggle"><input id="edgePadding" type="checkbox" checked /><span></span></label>
+          <span>가장자리 안전 패딩</span>
+        </div>
+        <div class="row">
+          <label class="toggle"><input id="showPulse" type="checkbox" checked /><span></span></label>
+          <span>히트/미스 이펙트</span>
+        </div>
+        <div class="row">
+          <span class="kbd">Space</span> 시작/일시정지
+          <span class="kbd">R</span> 재시작
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>반응형 · 다크/라이트 테마 · 로컬 최고점수 저장</span>
+  </footer>
+
+  <script>
+    // ----- 유틸 -----
+    const $ = sel => document.querySelector(sel);
+    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+    const lerp = (a, b, t) => a + (b - a) * t;
+
+    // ----- 오디오(웹 오디오 API) -----
+    const AudioKit = (() => {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      let ctx;
+      function ensure() { if (!ctx) ctx = new Ctx(); }
+      function beep({ freq = 880, dur = 0.08, type = 'sine', vol = 0.15 } = {}) {
+        ensure();
+        const t0 = ctx.currentTime;
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = type;
+        o.frequency.setValueAtTime(freq, t0);
+        g.gain.setValueAtTime(0, t0);
+        g.gain.linearRampToValueAtTime(vol, t0 + 0.005);
+        g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+        o.connect(g).connect(ctx.destination);
+        o.start(t0);
+        o.stop(t0 + dur + 0.02);
+      }
+      function chord(freqs = [440, 554, 659], step = 0.08) {
+        ensure();
+        freqs.forEach((f, i) => {
+          setTimeout(() => beep({ freq: f, dur: 0.12, type: 'triangle', vol: 0.12 }), i * step * 1000);
+        });
+      }
+      return { beep, chord };
+    })();
+
+    // ----- 모드 정의 -----
+    const MODES = {
+      classic: { key: 'classic', name: '클래식', clickAnywhere: true, moveEvery: 0, size: 100, precision: false },
+      target: { key: 'target', name: '타깃', clickAnywhere: false, moveEvery: 900, size: 100, precision: false },
+      burst: { key: 'burst', name: '버스트', clickAnywhere: false, moveEvery: 500, size: 64, precision: false },
+      precision: { key: 'precision', name: '정밀', clickAnywhere: false, moveEvery: 1200, size: 120, precision: true }
+    };
+
+    // ----- 상태 -----
+    const state = {
+      running: false,
+      paused: false,
+      startTs: 0,
+      pauseTs: 0,
+      duration: 30_000, // ms
+      timeLeft: 30_000,
+      score: 0,
+      hits: 0,
+      clicks: 0,
+      misses: 0,
+      streak: 0,
+      multiplier: 1,
+      multiplierCap: 5,
+      mode: MODES.classic,
+      targetSize: 100,
+      moveEvery: 900,
+      edgePadding: true,
+      missPenalty: true,
+      showPulse: true,
+      sound: true,
+      rafId: 0,
+      moveTimer: 0,
+    };
+
+    // ----- DOM 참조 -----
+    const arena = $('#arena');
+    const target = $('#target');
+    const countdown = $('#countdown');
+    const toasts = $('#toasts');
+
+    const startBtn = $('#startBtn');
+    const pauseBtn = $('#pauseBtn');
+    const resetBtn = $('#resetBtn');
+
+    const modeSel = $('#modeSel');
+    const durSel = $('#durSel');
+    const sizeRange = $('#sizeRange');
+    const speedRange = $('#speedRange');
+    const missPenalty = $('#missPenalty');
+    const edgePadding = $('#edgePadding');
+    const showPulse = $('#showPulse');
+    const soundToggle = $('#soundToggle');
+    const themeToggle = $('#themeToggle');
+
+    const hudMode = $('#hudMode');
+    const hudDuration = $('#hudDuration');
+    const hudBest = $('#hudBest');
+    const timeLeftEl = $('#timeLeft');
+    const barFill = $('#barFill');
+    const scoreEl = $('#score');
+    const cpsEl = $('#cps');
+    const streakEl = $('#streak');
+    const multEl = $('#mult');
+    const missesEl = $('#misses');
+    const sizeVal = $('#sizeVal');
+    const speedVal = $('#speedVal');
+
+    // ----- 로컬 스토리지 -----
+    function bestKey() {
+      return `speedclick_best_${state.mode.key}_${Math.round(state.duration/1000)}`;
+    }
+    function getBest() {
+      return parseInt(localStorage.getItem(bestKey()) || '0', 10);
+    }
+    function setBest(v) {
+      localStorage.setItem(bestKey(), String(v));
+    }
+
+    // ----- HUD 업데이트 -----
+    function updateHUD() {
+      hudMode.textContent = state.mode.name;
+      hudDuration.textContent = Math.round(state.duration / 1000);
+      timeLeftEl.textContent = (state.timeLeft / 1000).toFixed(1) + 's';
+      barFill.style.transform = `scaleX(${clamp(state.timeLeft / state.duration, 0, 1)})`;
+      scoreEl.textContent = state.score;
+      streakEl.textContent = state.streak;
+      multEl.textContent = `${state.multiplier}x`;
+      missesEl.textContent = state.misses;
+      const elapsed = Math.max(0.001, (state.duration - state.timeLeft) / 1000);
+      const cps = state.hits / elapsed;
+      cpsEl.textContent = cps.toFixed(2);
+      hudBest.textContent = getBest();
+    }
+
+    // ----- 토스트 -----
+    function toast(msg, color = 'white') {
+      const el = document.createElement('div');
+      el.className = 'toast';
+      el.style.color = color;
+      el.textContent = msg;
+      toasts.appendChild(el);
+      setTimeout(() => el.remove(), 1400);
+    }
+
+    // ----- 타깃 배치 -----
+    function randomPos() {
+      const rect = arena.getBoundingClientRect();
+      const pad = state.edgePadding ? 20 : 2;
+      const r = state.targetSize / 2 + pad;
+      const x = lerp(r, rect.width - r, Math.random());
+      const y = lerp(r, rect.height - r, Math.random());
+      return { x, y };
+    }
+    function placeTarget({ x, y, animate = true } = {}) {
+      if (x == null || y == null) ({ x, y } = randomPos());
+      target.style.width = target.style.height = `${state.targetSize}px`;
+      target.hidden = false;
+      const prev = target._pos || { x: x, y: y };
+      target._pos = { x, y };
+      if (animate) {
+        target.animate([
+          { transform: `translate(${prev.x - 50}%, ${prev.y - 50}%)` },
+          { transform: `translate(${x - 50}%, ${y - 50}%)` }
+        ], { duration: 140, easing: 'ease-out' });
+      }
+      target.style.left = x + 'px';
+      target.style.top = y + 'px';
+    }
+    function scheduleMove() {
+      clearInterval(state.moveTimer);
+      if (state.mode.moveEvery > 0 && state.running && !state.paused) {
+        state.moveTimer = setInterval(() => placeTarget({}), state.moveEvery);
+      }
+    }
+
+    // ----- 점수 로직 -----
+    function updateMultiplier() {
+      state.multiplier = clamp(1 + Math.floor(state.streak / 10), 1, state.multiplierCap);
+      multEl.textContent = `${state.multiplier}x`;
+    }
+    function onHit(e) {
+      if (!state.running || state.paused) return;
+      state.hits++;
+      state.streak++;
+      updateMultiplier();
+
+      let add = 1;
+      if (state.mode.precision) {
+        // 중심에 가까울수록 보너스 (내부 원 반지름 22% 기준)
+        const rect = target.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const dx = (e.clientX || (e.touches?.[0]?.clientX ?? 0)) - cx;
+        const dy = (e.clientY || (e.touches?.[0]?.clientY ?? 0)) - cy;
+        const r = rect.width / 2;
+        const d = Math.hypot(dx, dy);
+        const ratio = clamp(1 - d / r, 0, 1); // 중심:1, 가장자리:0
+        if (ratio > 0.78) add += 2; // 내부 링 보너스
+        else if (ratio > 0.55) add += 1;
+      }
+      const gained = add * state.multiplier;
+      state.score += gained;
+      if (state.showPulse) {
+        const p = document.createElement('div');
+        p.className = 'pulse';
+        p.style.left = target.style.left;
+        p.style.top = target.style.top;
+        arena.appendChild(p);
+        setTimeout(() => p.remove(), 650);
+      }
+      if (state.sound) AudioKit.beep({ freq: 880 + Math.min(400, state.streak * 6), dur: 0.06, type: 'square', vol: 0.12 });
+
+      // 피드백
+      if (state.streak === 10) toast('연속 10! 2x', '#8af5c9');
+      if (state.streak === 20) toast('연속 20! 3x', '#8af5c9');
+      if (state.streak === 30) toast('연속 30! 4x', '#8af5c9');
+
+      // 히트 후 즉시 위치 변경(버스트/타깃)
+      if (!state.mode.clickAnywhere) placeTarget({});
+      updateHUD();
+    }
+    function onMiss(x, y) {
+      if (!state.running || state.paused) return;
+      state.misses++;
+      if (state.missPenalty) {
+        state.streak = 0;
+        updateMultiplier();
+        toast('빗나감!', '#ffb3b3');
+      }
+      if (state.showPulse) {
+        const m = document.createElement('div');
+        m.className = 'miss';
+        m.style.left = x + 'px';
+        m.style.top = y + 'px';
+        arena.appendChild(m);
+        setTimeout(() => m.remove(), 720);
+      }
+      if (state.sound) AudioKit.beep({ freq: 220, dur: 0.08, type: 'sawtooth', vol: 0.10 });
+      updateHUD();
+    }
+
+    // ----- 게임 루프 -----
+    function tick() {
+      if (!state.running) return;
+      const now = performance.now();
+      const elapsed = now - state.startTs;
+      state.timeLeft = clamp(state.duration - elapsed, 0, state.duration);
+      updateHUD();
+
+      if (state.timeLeft <= 0) {
+        endGame();
+        return;
+      }
+      state.rafId = requestAnimationFrame(tick);
+    }
+
+    // ----- 카운트다운 -----
+    function doCountdown() {
+      return new Promise(resolve => {
+        let n = 3;
+        countdown.textContent = n;
+        countdown.classList.add('show');
+        const iv = setInterval(() => {
+          n--;
+          if (n > 0) {
+            countdown.textContent = n;
+            if (state.sound) AudioKit.beep({ freq: 520, dur: 0.08, type: 'triangle', vol: 0.10 });
+          } else {
+            countdown.textContent = '시작!';
+            if (state.sound) AudioKit.beep({ freq: 920, dur: 0.12, type: 'triangle', vol: 0.12 });
+            setTimeout(() => {
+              countdown.classList.remove('show');
+              resolve();
+            }, 280);
+            clearInterval(iv);
+          }
+        }, 700);
+      });
+    }
+
+    // ----- 컨트롤 -----
+    async function startGame() {
+      if (state.running) return;
+      // 설정 반영
+      state.duration = parseInt(durSel.value, 10) * 1000;
+      state.timeLeft = state.duration;
+      state.mode = MODES[modeSel.value];
+      state.targetSize = parseInt(sizeRange.value, 10);
+      state.moveEvery = parseInt(speedRange.value, 10);
+      state.edgePadding = edgePadding.checked;
+      state.missPenalty = missPenalty.checked;
+      state.showPulse = showPulse.checked;
+
+      // 모드별 기본값 보정
+      if (state.mode.size) state.targetSize = state.mode.size;
+      if (state.mode.moveEvery) state.moveEvery = state.mode.moveEvery;
+
+      // 초기화
+      state.score = 0; state.hits = 0; state.clicks = 0; state.misses = 0;
+      state.streak = 0; state.multiplier = 1; updateHUD();
+
+      // UI
+      startBtn.disabled = true;
+      pauseBtn.disabled = false;
+      resetBtn.disabled = false;
+      modeSel.disabled = true;
+      durSel.disabled = true;
+      arena.focus();
+
+      // 카운트다운
+      await doCountdown();
+
+      // 시작
+      state.running = true;
+      state.paused = false;
+      state.startTs = performance.now();
+      // 타깃 표시
+      if (state.mode.clickAnywhere) {
+        target.hidden = true;
+      } else {
+        placeTarget({ animate: false });
+        scheduleMove();
+      }
+      state.rafId = requestAnimationFrame(tick);
+    }
+
+    function pauseGame() {
+      if (!state.running) return;
+      state.paused = !state.paused;
+      if (state.paused) {
+        cancelAnimationFrame(state.rafId);
+        clearInterval(state.moveTimer);
+        state.pauseTs = performance.now();
+        pauseBtn.textContent = '▶ 재개';
+        toast('일시정지', '#ffd166');
+      } else {
+        const pausedDur = performance.now() - state.pauseTs;
+        state.startTs += pausedDur;
+        scheduleMove();
+        state.rafId = requestAnimationFrame(tick);
+        pauseBtn.textContent = '⏸ 일시정지';
+        toast('계속!', '#8af5c9');
+      }
+    }
+
+    function endGame() {
+      state.running = false;
+      state.paused = false;
+      cancelAnimationFrame(state.rafId);
+      clearInterval(state.moveTimer);
+      pauseBtn.disabled = true;
+      startBtn.disabled = true;
+      resetBtn.disabled = false;
+      modeSel.disabled = false;
+      durSel.disabled = false;
+
+      // 최고점수 갱신
+      const best = getBest();
+      if (state.score > best) {
+        setBest(state.score);
+        hudBest.textContent = state.score;
+        toast('신기록! 🎉', '#ffd166');
+        if (state.sound) AudioKit.chord([523, 659, 784], 0.06);
+      } else {
+        toast('끝! 수고했어요!', '#8af5c9');
+        if (state.sound) AudioKit.chord([392, 523], 0.08);
+      }
+    }
+
+    function resetGame() {
+      state.running = false;
+      state.paused = false;
+      cancelAnimationFrame(state.rafId);
+      clearInterval(state.moveTimer);
+      // 기본 HUD 복원
+      state.timeLeft = parseInt(durSel.value, 10) * 1000;
+      state.score = 0; state.hits = 0; state.clicks = 0; state.misses = 0;
+      state.streak = 0; state.multiplier = 1;
+      pauseBtn.textContent = '⏸ 일시정지';
+      target.hidden = state.mode.clickAnywhere || modeSel.value === 'classic';
+      // 버튼
+      startBtn.disabled = false;
+      pauseBtn.disabled = true;
+      resetBtn.disabled = true;
+      modeSel.disabled = false;
+      durSel.disabled = false;
+      updateHUD();
+    }
+
+    // ----- 이벤트 바인딩 -----
+    // 클릭 처리
+    function getPointerXY(ev) {
+      if (ev.touches && ev.touches[0]) return { x: ev.touches[0].clientX, y: ev.touches[0].clientY };
+      return { x: ev.clientX, y: ev.clientY };
+    }
+
+    arena.addEventListener('pointerdown', (ev) => {
+      if (!state.running || state.paused) return;
+      state.clicks++;
+      if (state.mode.clickAnywhere) {
+        onHit(ev);
+      } else {
+        // 타깃 외 클릭 시 미스
+        const tRect = target.getBoundingClientRect();
+        const { x, y } = getPointerXY(ev);
+        if (!(x >= tRect.left && x <= tRect.right && y >= tRect.top && y <= tRect.bottom)) {
+          const aRect = arena.getBoundingClientRect();
+          onMiss(x - aRect.left, y - aRect.top);
+        }
+      }
+    });
+
+    // 타깃 클릭(정확한 히트)
+    target.addEventListener('pointerdown', (ev) => {
+      if (!state.running || state.paused) return;
+      onHit(ev);
+      ev.stopPropagation();
+    });
+
+    // 버튼
+    startBtn.addEventListener('click', startGame);
+    pauseBtn.addEventListener('click', pauseGame);
+    resetBtn.addEventListener('click', resetGame);
+
+    // 설정 변화
+    modeSel.addEventListener('change', () => {
+      state.mode = MODES[modeSel.value];
+      hudMode.textContent = state.mode.name;
+      // 미리보기 반영
+      if (state.mode.size) {
+        sizeRange.value = state.mode.size;
+      }
+      if (state.mode.moveEvery) {
+        speedRange.value = state.mode.moveEvery;
+      }
+      sizeVal.textContent = sizeRange.value;
+      speedVal.textContent = speedRange.value;
+      target.hidden = state.mode.clickAnywhere;
+      updateHUD();
+    });
+    durSel.addEventListener('change', () => {
+      state.duration = parseInt(durSel.value, 10) * 1000;
+      state.timeLeft = state.duration;
+      hudDuration.textContent = durSel.value;
+      updateHUD();
+    });
+    sizeRange.addEventListener('input', () => {
+      sizeVal.textContent = sizeRange.value;
+      state.targetSize = parseInt(sizeRange.value, 10);
+      if (!state.mode.clickAnywhere) placeTarget({ animate: false });
+    });
+    speedRange.addEventListener('input', () => {
+      speedVal.textContent = speedRange.value;
+      state.moveEvery = parseInt(speedRange.value, 10);
+      scheduleMove();
+    });
+    missPenalty.addEventListener('change', () => state.missPenalty = missPenalty.checked);
+    edgePadding.addEventListener('change', () => state.edgePadding = edgePadding.checked);
+    showPulse.addEventListener('change', () => state.showPulse = showPulse.checked);
+    soundToggle.addEventListener('change', () => state.sound = soundToggle.checked);
+
+    // 키보드
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (!state.running) startGame();
+        else pauseGame();
+      } else if (e.key.toLowerCase() === 'r') {
+        e.preventDefault();
+        resetGame();
+      }
+    });
+
+    // 테마
+    function loadTheme() {
+      const saved = localStorage.getItem('speedclick_theme') || 'dark';
+      document.body.classList.toggle('light', saved === 'light');
+      themeToggle.checked = saved === 'light';
+    }
+    function saveTheme() {
+      localStorage.setItem('speedclick_theme', document.body.classList.contains('light') ? 'light' : 'dark');
+    }
+    themeToggle.addEventListener('change', () => {
+      document.body.classList.toggle('light', themeToggle.checked);
+      saveTheme();
+    });
+
+    // 초기 렌더
+    function init() {
+      loadTheme();
+      state.duration = parseInt(durSel.value, 10) * 1000;
+      state.timeLeft = state.duration;
+      state.mode = MODES[modeSel.value];
+      state.targetSize = parseInt(sizeRange.value, 10);
+      state.moveEvery = parseInt(speedRange.value, 10);
+      state.edgePadding = edgePadding.checked;
+      state.missPenalty = missPenalty.checked;
+      state.showPulse = showPulse.checked;
+      state.sound = soundToggle.checked;
+      sizeVal.textContent = sizeRange.value;
+      speedVal.textContent = speedRange.value;
+      updateHUD();
+      // 타깃 미리 배치
+      if (!state.mode.clickAnywhere) {
+        placeTarget({ animate: false });
+      } else {
+        target.hidden = true;
+      }
+    }
+    window.addEventListener('resize', () => {
+      if (!state.mode.clickAnywhere && !target.hidden) placeTarget({ animate: false });
+    });
+    init();
+  </script>
+</body>
+</html>
