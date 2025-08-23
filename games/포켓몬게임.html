@@ -1,1 +1,387 @@
-이 사이트는 개발중 입니다.
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>포켓몬 곤충 잡기</title>
+  <style>
+    :root{
+      --bg:#0f1225;
+      --panel:#161a33;
+      --accent:#7cf7a0;
+      --text:#e8ecff;
+      --muted:#9aa3c7;
+      --danger:#ff6b6b;
+      --gold:#ffd166;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100dvh;
+      display:flex; flex-direction:column; gap:12px;
+      background: radial-gradient(1200px 600px at 70% -10%, #1b2050 0%, var(--bg) 60%);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", "Apple SD Gothic Neo", Arial, sans-serif;
+      color:var(--text);
+    }
+    header{
+      padding:14px 16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;
+      background:linear-gradient(180deg, rgba(255,255,255,.04), transparent);
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    h1{font-size:18px; margin:0; letter-spacing:.2px; color:var(--accent)}
+    .controls{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .pill{
+      background:var(--panel); border:1px solid rgba(255,255,255,.08); color:var(--text);
+      padding:10px 12px; border-radius:10px; display:flex; gap:10px; align-items:center;
+    }
+    select, button{
+      background: #1b2143; color:var(--text);
+      border:1px solid rgba(255,255,255,.12); border-radius:8px;
+      padding:8px 10px; font-size:14px;
+    }
+    button.primary{background:linear-gradient(180deg, #2bff88, #12b76a); color:#072d17; border:none; font-weight:700}
+    button.stop{background:linear-gradient(180deg, #ff8c8c, #ff5252); color:#2a0000; border:none; font-weight:700}
+    .stat{color:var(--muted)}
+    .stat b{color:var(--text)}
+    #gameWrap{flex:1; display:flex; padding:0 16px 16px}
+    #board{
+      position:relative; flex:1; overflow:hidden;
+      background:
+        radial-gradient(180px 120px at 15% 20%, rgba(124,247,160,.08), transparent 60%),
+        radial-gradient(220px 140px at 85% 70%, rgba(124,247,160,.06), transparent 70%),
+        linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35) inset, 0 30px 60px rgba(0,0,0,.25);
+    }
+    #hud{
+      position:absolute; z-index:5; top:12px; left:12px; right:12px;
+      display:flex; justify-content:space-between; gap:10px; pointer-events:none;
+    }
+    .badge{
+      background:rgba(0,0,0,.35); backdrop-filter: blur(6px);
+      border:1px solid rgba(255,255,255,.12);
+      padding:8px 10px; border-radius:10px; font-weight:700; letter-spacing:.3px;
+    }
+    .badge.gold{color:#2d2100; background:linear-gradient(180deg, #ffeaa0, #e6c252)}
+    #centerMsg{
+      position:absolute; inset:0; display:grid; place-items:center; z-index:4; pointer-events:none;
+      font-weight:800; font-size:42px; letter-spacing:.5px; color:#ffffff;
+      text-shadow: 0 4px 22px rgba(0,0,0,.45);
+      opacity:0; transform: translateY(8px); transition:.35s ease;
+    }
+    #centerMsg.show{opacity:1; transform:none}
+    .bug{
+      position:absolute; width:48px; height:48px; border-radius:999px;
+      display:grid; place-items:center; cursor:pointer; user-select:none;
+      box-shadow: 0 6px 14px rgba(0,0,0,.35), inset 0 0 12px rgba(255,255,255,.12);
+      transition: transform .06s ease;
+      will-change: transform;
+    }
+    .bug:active{transform:scale(.92)}
+    .bug span{font-size:28px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.35))}
+    .bug.glow{box-shadow: 0 0 0 3px rgba(124,247,160,.4), 0 10px 20px rgba(0,0,0,.35)}
+    .pop{
+      position:absolute; z-index:6; pointer-events:none; color:var(--gold); font-weight:900;
+      text-shadow:0 2px 10px rgba(0,0,0,.5);
+      animation: pop 600ms ease-out forwards;
+    }
+    @keyframes pop{
+      0%{opacity:0; transform:translate(-50%,-20px) scale(.6)}
+      20%{opacity:1}
+      100%{opacity:0; transform:translate(-50%,-80px) scale(1.2)}
+    }
+    footer{
+      padding:10px 16px 16px; color:var(--muted); font-size:12px; text-align:center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>포켓몬 곤충 잡기</h1>
+    <div class="controls">
+      <div class="pill">
+        <label for="diff">난이도</label>
+        <select id="diff" aria-label="난이도 선택">
+          <option value="easy">쉬움</option>
+          <option value="normal" selected>보통</option>
+          <option value="hard">어려움</option>
+        </select>
+      </div>
+      <button id="startBtn" class="primary">시작</button>
+      <div class="pill stat">점수: <b id="score">0</b></div>
+      <div class="pill stat">남은 시간: <b id="time">30</b>s</div>
+      <div class="pill stat">최고점: <b id="best">0</b></div>
+    </div>
+  </header>
+
+  <div id="gameWrap">
+    <div id="board" role="application" aria-label="곤충 잡기 보드">
+      <div id="hud">
+        <div class="badge">잡으면 +1 점!</div>
+        <div class="badge gold" id="combo" style="display:none">COMBO x<span id="comboVal">1</span></div>
+      </div>
+      <div id="centerMsg">시작 준비!</div>
+    </div>
+  </div>
+
+  <footer>이모지로 구현된 팬메이드 미니게임입니다. 상표/저작권은 각 소유자에게 귀속됩니다.</footer>
+
+  <script>
+    // 간단한 상태
+    const state = {
+      running: false,
+      timeLeft: 30,
+      score: 0,
+      combo: 1,
+      comboTimer: 0,
+      bugs: [],
+      last: 0,
+      diff: 'normal'
+    };
+
+    // 난이도별 파라미터
+    const DIFF = {
+      easy:   { count: 6,  size: 52, speed:[40, 85],  time: 35 },
+      normal: { count: 9,  size: 44, speed:[85, 150], time: 30 },
+      hard:   { count: 12, size: 36, speed:[150,230], time: 25 }
+    };
+
+    const EMOJIS = ['🐛','🐞','🪲','🦋','🐜'];
+    const COLORS = ['#2dd4bf','#8b5cf6','#22d3ee','#f472b6','#f59e0b','#10b981','#ef4444'];
+
+    const $ = s => document.querySelector(s);
+    const board = $('#board');
+    const scoreEl = $('#score');
+    const timeEl = $('#time');
+    const bestEl = $('#best');
+    const startBtn = $('#startBtn');
+    const diffSel = $('#diff');
+    const centerMsg = $('#centerMsg');
+    const comboBadge = $('#combo');
+    const comboVal = $('#comboVal');
+
+    function rand(min,max){ return Math.random()*(max-min)+min; }
+    function choice(arr){ return arr[(Math.random()*arr.length)|0]; }
+
+    function loadBest(){
+      const key = 'bugcatch-best-' + state.diff;
+      return Number(localStorage.getItem(key) || 0);
+    }
+    function saveBest(v){
+      const key = 'bugcatch-best-' + state.diff;
+      localStorage.setItem(key, String(v));
+    }
+
+    function setDifficulty(d){
+      state.diff = d;
+      timeEl.textContent = DIFF[d].time;
+      bestEl.textContent = loadBest();
+    }
+
+    function showCenter(text, ms=1000){
+      centerMsg.textContent = text;
+      centerMsg.classList.add('show');
+      clearTimeout(showCenter._t);
+      showCenter._t = setTimeout(()=>centerMsg.classList.remove('show'), ms);
+    }
+
+    function spawnBug(){
+      const { size, speed } = DIFF[state.diff];
+      const rect = board.getBoundingClientRect();
+      const el = document.createElement('div');
+      el.className = 'bug glow';
+      el.style.width = el.style.height = size + 'px';
+      el.style.background = `radial-gradient(circle at 35% 25%, rgba(255,255,255,.35), transparent 60%), ${choice([
+        `linear-gradient(160deg, ${choice(COLORS)}, #0b132b)`,
+        `linear-gradient(200deg, #0b132b, ${choice(COLORS)})`
+      ])}`;
+      el.style.left = Math.max(4, rand(0, rect.width - size - 4)) + 'px';
+      el.style.top  = Math.max(4, rand(0, rect.height - size - 4)) + 'px';
+      const span = document.createElement('span');
+      span.textContent = choice(EMOJIS);
+      el.appendChild(span);
+
+      const vx = rand(speed[0], speed[1]) * (Math.random()<.5?-1:1);
+      const vy = rand(speed[0], speed[1]) * (Math.random()<.5?-1:1);
+      const bug = { el, x: parseFloat(el.style.left), y: parseFloat(el.style.top), vx, vy, size };
+
+      el.addEventListener('click', e=>{
+        if(!state.running) return;
+        e.stopPropagation();
+        catchBug(bug, e.clientX, e.clientY);
+      }, { passive: true });
+
+      board.appendChild(el);
+      state.bugs.push(bug);
+
+      // 시작 후 잠깐만 빛남
+      setTimeout(()=>el.classList.remove('glow'), 500);
+    }
+
+    function catchBug(bug, cx, cy){
+      // 이펙트
+      const p = document.createElement('div');
+      p.className = 'pop';
+      p.textContent = `+${state.combo}`;
+      p.style.left = cx + 'px';
+      p.style.top  = cy + 'px';
+      board.appendChild(p);
+      setTimeout(()=>p.remove(), 650);
+
+      // 점수/콤보
+      state.score += state.combo;
+      scoreEl.textContent = state.score;
+      state.combo = Math.min(9, state.combo + 1);
+      state.comboTimer = 1.6; // 콤보 유효시간
+      comboVal.textContent = state.combo;
+      comboBadge.style.display = 'block';
+
+      // 제거 & 보충
+      bug.el.remove();
+      state.bugs = state.bugs.filter(b => b!==bug);
+      if(state.running){
+        setTimeout(()=> {
+          if(state.running && state.bugs.length < DIFF[state.diff].count) spawnBug();
+        }, 120);
+      }
+    }
+
+    function resetBoard(){
+      state.bugs.forEach(b=>b.el.remove());
+      state.bugs.length = 0;
+      comboBadge.style.display = 'none';
+      state.combo = 1;
+      state.comboTimer = 0;
+      scoreEl.textContent = '0';
+      board.style.cursor = 'crosshair';
+    }
+
+    function startGame(){
+      if(state.running) { stopGame(); return; }
+      resetBoard();
+      state.running = true;
+      startBtn.textContent = '중지';
+      startBtn.classList.remove('primary');
+      startBtn.classList.add('stop');
+
+      state.timeLeft = DIFF[state.diff].time;
+      timeEl.textContent = state.timeLeft;
+      state.score = 0;
+      scoreEl.textContent = '0';
+
+      // 초기 스폰
+      const target = DIFF[state.diff].count;
+      for(let i=0;i<target;i++) spawnBug();
+
+      showCenter('시작!');
+      state.last = performance.now();
+      requestAnimationFrame(loop);
+      tickTimer();
+    }
+
+    function stopGame(final=false){
+      state.running = false;
+      startBtn.textContent = '시작';
+      startBtn.classList.remove('stop');
+      startBtn.classList.add('primary');
+      board.style.cursor = 'default';
+      if(final){
+        const best = loadBest();
+        if(state.score > best){
+          saveBest(state.score);
+          bestEl.textContent = state.score;
+          showCenter('신기록!');
+        }else{
+          showCenter('끝!');
+        }
+      }
+    }
+
+    function loop(now){
+      if(!state.running) return;
+      const dt = Math.min(0.033, (now - state.last) / 1000);
+      state.last = now;
+
+      // 콤보 타이머
+      if(state.comboTimer > 0){
+        state.comboTimer -= dt;
+        comboBadge.style.opacity = '1';
+        if(state.comboTimer <= 0){
+          state.combo = 1;
+          comboVal.textContent = '1';
+          comboBadge.style.opacity = '.65';
+          setTimeout(()=>{ if(state.combo===1) comboBadge.style.display='none'; }, 300);
+        }
+      }
+
+      // 보드 크기
+      const rect = board.getBoundingClientRect();
+      for(const b of state.bugs){
+        b.x += b.vx * dt;
+        b.y += b.vy * dt;
+
+        // 벽 반사
+        if(b.x <= 2){ b.x=2; b.vx = Math.abs(b.vx); }
+        else if(b.x + b.size >= rect.width - 2){ b.x = rect.width - b.size - 2; b.vx = -Math.abs(b.vx); }
+
+        if(b.y <= 2){ b.y=2; b.vy = Math.abs(b.vy); }
+        else if(b.y + b.size >= rect.height - 2){ b.y = rect.height - b.size - 2; b.vy = -Math.abs(b.vy); }
+
+        b.el.style.transform = `translate(${b.x}px, ${b.y}px)`;
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    function tickTimer(){
+      if(!state.running) return;
+      const t = Date.now();
+
+      // 1초 단위 감소
+      clearTimeout(tickTimer._t);
+      tickTimer._t = setTimeout(()=>{
+        state.timeLeft--;
+        timeEl.textContent = state.timeLeft;
+        if(state.timeLeft <= 0){
+          stopGame(true);
+        }else{
+          tickTimer();
+        }
+      }, 1000);
+    }
+
+    // 이벤트
+    startBtn.addEventListener('click', startGame);
+    diffSel.addEventListener('change', e=>{
+      const wasRunning = state.running;
+      stopGame();
+      setDifficulty(e.target.value);
+      resetBoard();
+      if(wasRunning) showCenter('난이도 변경');
+    });
+
+    // 보드 클릭 실패 시 콤보 끊김 처리(선택)
+    board.addEventListener('click', e=>{
+      if(!state.running) return;
+      if(!e.target.classList.contains('bug')){
+        state.combo = 1;
+        comboVal.textContent = '1';
+        comboBadge.style.display = 'none';
+      }
+    });
+
+    // 초기 설정
+    setDifficulty(diffSel.value);
+    showCenter('시작을 눌러주세요', 1200);
+
+    // 리사이즈 시 화면 밖 버그 위치 클램프
+    window.addEventListener('resize', ()=>{
+      const rect = board.getBoundingClientRect();
+      for(const b of state.bugs){
+        b.x = Math.max(2, Math.min(rect.width - b.size - 2, b.x));
+        b.y = Math.max(2, Math.min(rect.height - b.size - 2, b.y));
+      }
+    });
+  </script>
+</body>
+</html>
