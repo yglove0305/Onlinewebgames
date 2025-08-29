@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>리버시(오델로) — 사람 vs AI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0f1320;
+      --panel:#171b2a;
+      --accent:#37d67a;
+      --accent-2:#5ea1ff;
+      --text:#e6e9f2;
+      --muted:#9aa3b2;
+      --board:#1f2436;
+      --cell:#26304a;
+      --cell-alt:#2a3450;
+      --hint: #79f2a6;
+      --black:#0a0a0a;
+      --white:#f5f7fa;
+      --shadow: rgba(0,0,0,.25);
+    }
+    *{box-sizing: border-box}
+    body{
+      margin:0;
+      background: linear-gradient(140deg,#0b0e18,#101731 55%,#0b0f22);
+      color:var(--text);
+      font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
+      display:flex; min-height:100vh; align-items:center; justify-content:center;
+      padding:24px;
+    }
+    .app{
+      width:min(1100px,100%);
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      gap:20px;
+    }
+    @media (max-width: 960px){
+      .app{grid-template-columns: 1fr}
+    }
+    .panel{
+      background:linear-gradient(180deg, var(--panel), #121726);
+      border:1px solid #262c40;
+      border-radius:14px;
+      padding:16px;
+      box-shadow: 0 10px 24px var(--shadow), inset 0 1px 0 rgba(255,255,255,.03);
+    }
+    h1{
+      margin:0 0 10px;
+      font-size:20px;
+      letter-spacing:.2px;
+    }
+    .controls{
+      display:grid; gap:12px; grid-template-columns: 1fr 1fr;
+      margin-top:12px;
+    }
+    .controls .row{display:flex; flex-direction:column; gap:6px}
+    label{font-size:12px; color:var(--muted)}
+    select, button, .toggle{
+      background:#111525;
+      color:var(--text);
+      border:1px solid #2b3453;
+      border-radius:10px;
+      padding:10px 12px;
+      outline:none;
+      transition:.2s ease;
+    }
+    select:focus, button:focus, .toggle:focus{
+      border-color: var(--accent-2);
+      box-shadow: 0 0 0 3px rgba(94,161,255,.18);
+    }
+    button{
+      cursor:pointer; font-weight:600;
+    }
+    .btn-accent{ background: linear-gradient(135deg, #2fbf71, #2cdd84); border-color: transparent; color:#0a1118 }
+    .btn-accent:hover{ filter:brightness(1.05) }
+    .btn-ghost{ background:#111525 }
+    .status{
+      margin-top:14px; padding:12px;
+      background:#0f1322; border:1px solid #262c40; border-radius:10px;
+      display:grid; gap:8px;
+    }
+    .status .grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px }
+    .badge{
+      display:inline-flex; align-items:center; gap:8px; font-weight:700;
+      background:#0e1428; border:1px solid #2b3453; padding:8px 10px; border-radius:999px;
+    }
+    .disc{
+      width:14px; height:14px; border-radius:50%;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.18), inset 0 -1px 0 rgba(0,0,0,.25);
+    }
+    .disc.black{ background: radial-gradient(circle at 30% 30%, #333 0%, #000 70%) }
+    .disc.white{ background: radial-gradient(circle at 30% 30%, #fff 0%, #cfd6e6 80%) }
+    .flex{ display:flex; align-items:center; gap:10px; flex-wrap:wrap }
+
+    /* Board */
+    .board-wrap{ display:flex; align-items:center; justify-content:center }
+    .board{
+      width:min(90vw, 640px);
+      aspect-ratio:1/1;
+      background:linear-gradient(160deg, #1e2438, #1a2136 60%);
+      border-radius:16px;
+      padding:12px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04);
+      border:1px solid #2b3453;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(8, 1fr);
+      grid-template-rows: repeat(8, 1fr);
+      gap:7px;
+      width:100%; height:100%;
+    }
+    .cell{
+      position:relative;
+      background: linear-gradient(180deg, var(--cell), var(--cell-alt));
+      border-radius:10px;
+      border:1px solid #2c3657;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.02);
+      cursor:pointer;
+      transition: transform .05s ease, background .25s ease;
+      overflow:hidden;
+    }
+    .cell:hover{ transform: translateY(-1px); }
+    .cell.invalid{ cursor:not-allowed; filter: grayscale(25%) brightness(.9) }
+    .dot{
+      position:absolute; inset:auto;
+      width:16px; height:16px; border-radius:50%;
+      background: radial-gradient(circle, var(--hint), #32cd78);
+      box-shadow: 0 0 0 6px rgba(50,205,120,.12), 0 0 14px rgba(50,205,120,.4);
+      top:50%; left:50%; transform: translate(-50%, -50%);
+      opacity:.9;
+    }
+    .piece{
+      position:absolute; width:76%; height:76%; border-radius:50%;
+      top:50%; left:50%; transform: translate(-50%,-50%) scale(.8);
+      box-shadow: 0 10px 24px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.06);
+      transition: transform .18s ease, background .18s ease, filter .18s ease;
+    }
+    .piece.black{
+      background: radial-gradient(circle at 30% 30%, #333 0%, #000 75%);
+    }
+    .piece.white{
+      background: radial-gradient(circle at 30% 30%, #fff 0%, #cfd6e6 80%);
+    }
+    .piece.flip{
+      animation: flip .25s ease both;
+    }
+    @keyframes flip{
+      0%{ transform: translate(-50%,-50%) rotateY(0) scale(.85) }
+      50%{ transform: translate(-50%,-50%) rotateY(90deg) scale(.75) }
+      100%{ transform: translate(-50%,-50%) rotateY(0) scale(.85) }
+    }
+
+    /* Move log */
+    .log{
+      max-height:240px; overflow:auto; margin-top:6px;
+      background:#0e1428; border:1px solid #2b3453; border-radius:10px; padding:8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size:13px; color:#cfe3ff;
+    }
+    .log .row{ display:flex; gap:10px; padding:4px 2px; border-bottom:1px dashed rgba(255,255,255,.06) }
+    .log .row:last-child{ border-bottom:none }
+    .pill{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:4px 8px; border-radius:999px; border:1px solid #2b3453; background:#0f1730;
+    }
+    .kbd{
+      border:1px solid #2b3453; background:#101836; color:#dfe8ff; padding:2px 6px; border-radius:6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="panel">
+      <h1>리버시(오델로) — 사람 vs AI</h1>
+      <div class="controls">
+        <div class="row">
+          <label for="color">내 돌 색</label>
+          <select id="color">
+            <option value="1">검정(선공)</option>
+            <option value="-1">흰색(후공)</option>
+          </select>
+        </div>
+        <div class="row">
+          <label for="difficulty">난이도</label>
+          <select id="difficulty">
+            <option value="0">쉬움</option>
+            <option value="1">보통</option>
+            <option value="2" selected>어려움</option>
+            <option value="3">고급</option>
+          </select>
+        </div>
+        <div class="row">
+          <label for="first">선공</label>
+          <select id="first">
+            <option value="1">사람</option>
+            <option value="-1">AI</option>
+          </select>
+        </div>
+        <div class="row">
+          <label>&nbsp;</label>
+          <button id="new" class="btn-accent">새 게임</button>
+        </div>
+        <div class="row">
+          <label>&nbsp;</label>
+          <button id="undo" class="btn-ghost">되돌리기</button>
+        </div>
+        <div class="row">
+          <label>&nbsp;</label>
+          <button id="hint" class="btn-ghost">힌트</button>
+        </div>
+      </div>
+
+      <div class="status">
+        <div class="grid">
+          <div class="badge">
+            <span class="disc black"></span> <span id="scoreBlack">검정 2</span>
+          </div>
+          <div class="badge">
+            <span class="disc white"></span> <span id="scoreWhite">흰색 2</span>
+          </div>
+        </div>
+        <div class="flex">
+          <span class="pill"><strong>턴</strong> <span id="turnText">검정(사람)</span></span>
+          <span class="pill"><strong>상태</strong> <span id="statusText">게임 준비</span></span>
+        </div>
+        <div class="flex">
+          <span class="kbd">클릭</span> 가능한 수 표시 • <span class="kbd">되돌리기</span>로 이전으로
+        </div>
+      </div>
+
+      <div class="log" id="log"></div>
+    </div>
+
+    <div class="board-wrap">
+      <div class="board">
+        <div id="grid" class="grid" aria-label="리버시 보드" role="grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    "use strict";
+
+    // ====== 리버시 로직: 보드/수 탐색/평가 ======
+    const EMPTY = 0, BLACK = 1, WHITE = -1;
+    const DIRS = [
+      [-1,-1],[-1,0],[-1,1],
+      [0,-1],       [0,1],
+      [1,-1],[1,0],[1,1]
+    ];
+
+    // 포지션 가중치(전형적 코너/엣지 우선)
+    const WEIGHTS = [
+      [120,-25, 10,  5,  5, 10,-25,120],
+      [-25,-30, -5, -5, -5, -5,-30,-25],
+      [ 10, -5,  5,  1,  1,  5, -5, 10],
+      [  5, -5,  1,  2,  2,  1, -5,  5],
+      [  5, -5,  1,  2,  2,  1, -5,  5],
+      [ 10, -5,  5,  1,  1,  5, -5, 10],
+      [-25,-30, -5, -5, -5, -5,-30,-25],
+      [120,-25, 10,  5,  5, 10,-25,120],
+    ];
+
+    function cloneBoard(b){
+      return b.map(row => row.slice());
+    }
+    function inBounds(r,c){
+      return r>=0 && r<8 && c>=0 && c<8;
+    }
+    function initialBoard(){
+      const b = Array.from({length:8}, () => Array(8).fill(EMPTY));
+      b[3][3] = WHITE; b[3][4] = BLACK;
+      b[4][3] = BLACK; b[4][4] = WHITE;
+      return b;
+    }
+    function getScore(board){
+      let black=0, white=0;
+      for(let r=0;r<8;r++) for(let c=0;c<8;c++){
+        if(board[r][c]===BLACK) black++;
+        else if(board[r][c]===WHITE) white++;
+      }
+      return {black, white};
+    }
+
+    // 유효 수 찾기: 각 수마다 뒤집히는 타일 목록 포함
+    function getValidMoves(board, player){
+      const moves = [];
+      for(let r=0;r<8;r++){
+        for(let c=0;c<8;c++){
+          if(board[r][c]!==EMPTY) continue;
+          const flips = [];
+          for(const [dr,dc] of DIRS){
+            let rr=r+dr, cc=c+dc;
+            const line=[];
+            while(inBounds(rr,cc) && board[rr][cc]===-player){
+              line.push([rr,cc]);
+              rr+=dr; cc+=dc;
+            }
+            if(line.length>0 && inBounds(rr,cc) && board[rr][cc]===player){
+              flips.push(...line);
+            }
+          }
+          if(flips.length>0) moves.push({r, c, flips});
+        }
+      }
+      return moves;
+    }
+
+    function applyMove(board, move, player){
+      const nb = cloneBoard(board);
+      nb[move.r][move.c] = player;
+      for(const [rr,cc] of move.flips){
+        nb[rr][cc] = player;
+      }
+      return nb;
+    }
+
+    function hasAnyMove(board, player){
+      return getValidMoves(board, player).length>0;
+    }
+
+    function isGameOver(board){
+      return !hasAnyMove(board, BLACK) && !hasAnyMove(board, WHITE);
+    }
+
+    // 휴리스틱 평가(플레이어 관점 점수)
+    function evaluate(board, player){
+      // 1) 디스크 차이(후반 가중치 증가)
+      const {black, white} = getScore(board);
+      const discDiff = 100 * (player===BLACK ? (black-white) : (white-black)) / (black+white || 1);
+
+      // 2) 가중치 맵 합
+      let posScore=0;
+      for(let r=0;r<8;r++){
+        for(let c=0;c<8;c++){
+          if(board[r][c]===player) posScore += WEIGHTS[r][c];
+          else if(board[r][c]===-player) posScore -= WEIGHTS[r][c];
+        }
+      }
+
+      // 3) 가동성(둘 수 있는 곳 수)
+      const myMoves = getValidMoves(board, player).length;
+      const oppMoves = getValidMoves(board, -player).length;
+      const mobility = (myMoves + oppMoves) ? 100 * (myMoves - oppMoves) / (myMoves + oppMoves) : 0;
+
+      // 4) 코너/근코너 보정
+      const corners = [[0,0],[0,7],[7,0],[7,7]];
+      let cornerScore = 0;
+      for(const [r,c] of corners){
+        if(board[r][c]===player) cornerScore += 200;
+        else if(board[r][c]===-player) cornerScore -= 200;
+      }
+
+      // 5) 변(엣지) 안정성(간단 버전)
+      let edgeScore=0;
+      for(let i=1;i<7;i++){
+        // 상/하 변
+        if(board[0][i]===player) edgeScore+=6; else if(board[0][i]===-player) edgeScore-=6;
+        if(board[7][i]===player) edgeScore+=6; else if(board[7][i]===-player) edgeScore-=6;
+        // 좌/우 변
+        if(board[i][0]===player) edgeScore+=6; else if(board[i][0]===-player) edgeScore-=6;
+        if(board[i][7]===player) edgeScore+=6; else if(board[i][7]===-player) edgeScore-=6;
+      }
+
+      // 중후반으로 갈수록 디스크/코너 가중치↑
+      const totalDiscs = black + white;
+      const phase = Math.min(1, totalDiscs / 64); // 0~1
+      const wPos = 1 - 0.35*phase;
+      const wMob = 0.8 - 0.5*phase;
+      const wDisc = 0.3 + 0.9*phase;
+      const wCorner = 1.2;
+      const wEdge = 0.5;
+
+      return wPos*posScore + wMob*mobility + wDisc*discDiff + wCorner*cornerScore + wEdge*edgeScore;
+    }
+
+    // 난이도 전략
+    const Difficulty = {
+      EASY: 0,     // 랜덤
+      NORMAL: 1,   // 탐욕 + 포지션 가중치
+      HARD: 2,     // 미니맥스 αβ(깊이 4)
+      EXPERT: 3    // 미니맥스 αβ(깊이 5)
+    };
+
+    function aiChooseMove(board, player, level){
+      const moves = getValidMoves(board, player);
+      if(moves.length===0) return null;
+
+      if(level===Difficulty.EASY){
+        return moves[Math.floor(Math.random()*moves.length)];
+      }
+
+      if(level===Difficulty.NORMAL){
+        let best=null, bestScore=-Infinity;
+        for(const m of moves){
+          const nb = applyMove(board, m, player);
+          const score = evaluate(nb, player) + m.flips.length*2;
+          if(score>bestScore){ bestScore=score; best=m; }
+        }
+        return best;
+      }
+
+      const depth = (level===Difficulty.HARD)?4:5;
+      // 간단한 무브 오더링: 코너 우선
+      const order = (m)=> ( (m.r===0||m.r===7)&&(m.c===0||m.c===7) ) ? 3
+                           : (m.r===0||m.r===7||m.c===0||m.c===7) ? 2
+                           : 1;
+      moves.sort((a,b)=> order(b)-order(a) || b.flips.length-a.flips.length);
+
+      const {move} = minimax(board, player, depth, -Infinity, Infinity, player);
+      return move || moves[0];
+    }
+
+    function minimax(board, toMove, depth, alpha, beta, maxPlayer){
+      // 게임 종료 또는 깊이 끝
+      if(depth===0 || isGameOver(board)){
+        return { score: evaluate(board, maxPlayer), move: null };
+      }
+
+      const moves = getValidMoves(board, toMove);
+      if(moves.length===0){
+        // 패스
+        const passEval = minimax(board, -toMove, depth-1, alpha, beta, maxPlayer);
+        return { score: passEval.score, move: null };
+      }
+
+      // 무브 오더링
+      const ordered = moves.slice().sort((a,b)=>{
+        const ac = ((a.r===0||a.r===7)&&(a.c===0||a.c===7)) ? 3 : ((a.r===0||a.r===7||a.c===0||a.c===7)?2:1);
+        const bc = ((b.r===0||b.r===7)&&(b.c===0||b.c===7)) ? 3 : ((b.r===0||b.r===7||b.c===0||b.c===7)?2:1);
+        if(bc!==ac) return bc-ac;
+        return b.flips.length - a.flips.length;
+      });
+
+      let bestMove = ordered[0];
+      if(toMove===maxPlayer){
+        let best = -Infinity;
+        for(const m of ordered){
+          const nb = applyMove(board, m, toMove);
+          const {score} = minimax(nb, -toMove, depth-1, alpha, beta, maxPlayer);
+          if(score>best){ best=score; bestMove=m; }
+          alpha = Math.max(alpha, best);
+          if(beta<=alpha) break; // 가지치기
+        }
+        return { score: best, move: bestMove };
+      }else{
+        let best = Infinity;
+        for(const m of ordered){
+          const nb = applyMove(board, m, toMove);
+          const {score} = minimax(nb, -toMove, depth-1, alpha, beta, maxPlayer);
+          if(score<best){ best=score; bestMove=m; }
+          beta = Math.min(beta, best);
+          if(beta<=alpha) break; // 가지치기
+        }
+        return { score: best, move: bestMove };
+      }
+    }
+
+    // ====== UI / 게임 상태 관리 ======
+    const gridEl = document.getElementById('grid');
+    const logEl = document.getElementById('log');
+    const scoreBlackEl = document.getElementById('scoreBlack');
+    const scoreWhiteEl = document.getElementById('scoreWhite');
+    const turnTextEl = document.getElementById('turnText');
+    const statusTextEl = document.getElementById('statusText');
+
+    const colorSel = document.getElementById('color');
+    const diffSel = document.getElementById('difficulty');
+    const firstSel = document.getElementById('first');
+    const newBtn = document.getElementById('new');
+    const undoBtn = document.getElementById('undo');
+    const hintBtn = document.getElementById('hint');
+
+    let state = {
+      board: initialBoard(),
+      current: BLACK,      // 현재 턴(1 = 검정, -1 = 흰색)
+      humanColor: BLACK,   // 사람의 돌 색
+      aiLevel: Difficulty.HARD,
+      history: [],         // {board, current, note}
+      lock: false,         // AI 진행 중 클릭 잠금
+      hinted: null         // 힌트 위치
+    };
+
+    function resetGame(){
+      state.board = initialBoard();
+      state.current = (Number(firstSel.value)===1) ? Number(colorSel.value) : -Number(colorSel.value);
+      state.humanColor = Number(colorSel.value);
+      state.aiLevel = Number(diffSel.value);
+      state.history = [];
+      state.lock = false;
+      state.hinted = null;
+      clearLog();
+      pushHistory("게임 시작");
+      render();
+      maybeAIMove();
+    }
+
+    function pushHistory(note){
+      state.history.push({
+        board: cloneBoard(state.board),
+        current: state.current,
+        note
+      });
+      appendLog(note);
+    }
+
+    function appendLog(text){
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.textContent = text;
+      logEl.appendChild(row);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+    function clearLog(){
+      logEl.innerHTML = '';
+    }
+
+    function coordToName(r,c){
+      const col = String.fromCharCode('A'.charCodeAt(0)+c);
+      return `${col}${r+1}`;
+    }
+
+    function render(){
+      // 점수/턴 텍스트
+      const {black, white} = getScore(state.board);
+      scoreBlackEl.textContent = `검정 ${black}`;
+      scoreWhiteEl.textContent = `흰색 ${white}`;
+
+      const who = (state.current===state.humanColor) ? '사람' : 'AI';
+      const colorText = (state.current===BLACK)?'검정':'흰색';
+      turnTextEl.textContent = `${colorText}(${who})`;
+
+      // 보드 렌더
+      gridEl.innerHTML = '';
+      gridEl.style.pointerEvents = state.lock ? 'none' : 'auto';
+
+      const moves = getValidMoves(state.board, state.current);
+      const moveSet = new Set(moves.map(m => `${m.r},${m.c}`));
+      const hintKey = state.hinted ? `${state.hinted.r},${state.hinted.c}` : null;
+
+      for(let r=0;r<8;r++){
+        for(let c=0;c<8;c++){
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          cell.setAttribute('role','gridcell');
+          cell.setAttribute('aria-label', `r${r+1} c${c+1}`);
+          cell.dataset.r = r;
+          cell.dataset.c = c;
+
+          const v = state.board[r][c];
+          if(v!==EMPTY){
+            const piece = document.createElement('div');
+            piece.className = 'piece ' + (v===BLACK?'black':'white');
+            cell.appendChild(piece);
+          }else{
+            // 유효 수 점 표시
+            if(moveSet.has(`${r},${c}`)){
+              const dot = document.createElement('div');
+              dot.className = 'dot';
+              // 힌트 위치면 더 강조
+              if(hintKey===`${r},${c}`){
+                dot.style.boxShadow = '0 0 0 8px rgba(55,214,122,.18), 0 0 22px rgba(55,214,122,.7)';
+                dot.style.transform = 'translate(-50%,-50%) scale(1.1)';
+              }
+              cell.appendChild(dot);
+            }else{
+              cell.classList.add('invalid');
+            }
+          }
+
+          cell.addEventListener('click', onCellClick);
+          gridEl.appendChild(cell);
+        }
+      }
+
+      // 상태 업데이트
+      if(isGameOver(state.board)){
+        const {black: b, white: w} = getScore(state.board);
+        const result = (b>w) ? '검정 승' : (w>b) ? '흰색 승' : '무승부';
+        statusTextEl.textContent = `게임 종료 — ${result}`;
+      }else{
+        if(getValidMoves(state.board, state.current).length===0){
+          statusTextEl.textContent = '유효 수 없음 — 패스 필요';
+        }else{
+          statusTextEl.textContent = '진행 중';
+        }
+      }
+    }
+
+    function onCellClick(e){
+      if(state.lock) return;
+      const r = Number(e.currentTarget.dataset.r);
+      const c = Number(e.currentTarget.dataset.c);
+      const isHumanTurn = state.current === state.humanColor;
+      if(!isHumanTurn) return;
+
+      const moves = getValidMoves(state.board, state.current);
+      const mv = moves.find(m => m.r===r && m.c===c);
+      if(!mv) return; // invalid
+
+      const coord = coordToName(r,c);
+      state.board = applyMove(state.board, mv, state.current);
+      state.current = -state.current;
+      state.hinted = null;
+      pushHistory(`사람 ${coord} (뒤집힘 ${mv.flips.length})`);
+      render();
+      handlePassOrContinue();
+    }
+
+    function handlePassOrContinue(){
+      if(isGameOver(state.board)){
+        render();
+        return;
+      }
+      // 현재 플레이어가 둘 곳이 없다면 패스
+      if(getValidMoves(state.board, state.current).length===0){
+        const who = (state.current===state.humanColor) ? '사람' : 'AI';
+        pushHistory(`${who} 패스`);
+        state.current = -state.current;
+        render();
+        // 연속 패스 후 게임 종료일 수 있음
+        if(isGameOver(state.board)){
+          render();
+          return;
+        }
+      }
+      maybeAIMove();
+    }
+
+    function maybeAIMove(){
+      if(isGameOver(state.board)) return;
+      const aiTurn = state.current !== state.humanColor;
+      if(!aiTurn) return;
+      state.lock = true;
+      render();
+
+      setTimeout(()=>{
+        const move = aiChooseMove(state.board, state.current, state.aiLevel);
+        if(move){
+          const coord = coordToName(move.r, move.c);
+          state.board = applyMove(state.board, move, state.current);
+          state.current = -state.current;
+          pushHistory(`AI ${coord} (뒤집힘 ${move.flips.length})`);
+        }else{
+          pushHistory('AI 패스');
+          state.current = -state.current;
+        }
+        state.lock = false;
+        render();
+        handlePassOrContinue();
+      }, 200); // 자연스러운 템포
+    }
+
+    // 되돌리기: 사람 턴 기준 한 수(또는 AI+사람 2수) 되돌리기
+    function undo(){
+      // 현재 상태 포함하여 최소 2단계(직전 착수 전) 필요
+      if(state.history.length<=1) return;
+      // 마지막 기록은 현재 상태, 하나 더 꺼내 과거로
+      state.history.pop(); // 현재
+      const prev = state.history.pop(); // 이전
+      if(prev){
+        state.board = cloneBoard(prev.board);
+        state.current = prev.current;
+        pushHistory('되돌리기');
+        state.hinted = null;
+        render();
+      }
+    }
+
+    function showHint(){
+      const moves = getValidMoves(state.board, state.current);
+      if(moves.length===0){
+        state.hinted = null;
+        statusTextEl.textContent = '힌트 없음(둘 수 있는 곳이 없습니다)';
+        render();
+        return;
+      }
+      // 힌트: 현재 난이도와 동일한 평가 사용
+      let chosen;
+      if(state.aiLevel<=Difficulty.NORMAL){
+        chosen = aiChooseMove(state.board, state.current, Difficulty.NORMAL);
+      }else{
+        chosen = aiChooseMove(state.board, state.current, Difficulty.HARD);
+      }
+      state.hinted = chosen;
+      const coord = coordToName(chosen.r, chosen.c);
+      statusTextEl.textContent = `힌트: ${coord}`;
+      render();
+    }
+
+    // 이벤트
+    newBtn.addEventListener('click', resetGame);
+    undoBtn.addEventListener('click', undo);
+    hintBtn.addEventListener('click', showHint);
+
+    // 초기화
+    resetGame();
+
+  </script>
+</body>
+</html>
