@@ -4,20 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>온라인 미니 웹게임</title>
-
   <!-- 보안 메타태그 -->
   <meta http-equiv="X-Frame-Options" content="DENY">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
-
   <!-- Open Graph -->
   <meta property="og:image" content="https://th.bing.com/th/id/R.f5859a57a426146fba5b5d3ad2320c57?rik=%2fSnGL%2bpqSOevmw&riu=http%3a%2f%2fwww.urbanbrush.net%2fweb%2fwp-content%2fuploads%2fedd%2f2018%2f07%2fweb-20180702122005224775.png&ehk=A6yoPOWbRKTmz2csLXwp2TvaLLA0JqHQRyyB0DeKM5g%3d&risl=&pid=ImgRaw&r=0">
   <meta property="og:title" content="온라인 미니 웹게임">
   <meta property="og:description" content="미니 웹게임을 플레이 해보실수 있습니다.">
-
   <!-- DOMPurify (XSS 방지 라이브러리) -->
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
-
   <style>
     body {
       font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
@@ -111,7 +107,6 @@
       }
     }
   </style>
-
   <script>
     // 클릭재킹 방지
     if (window.top !== window.self) {
@@ -136,34 +131,34 @@
 
     // 음성 안내 기능
     function speakText() {
-      const message = `
-        온라인 미니 웹게임에 오신 것을 환영합니다.
-        이 페이지에서는 할리갈리, 틱텍토, 돌림판, 슈퍼마리오, 스피드 클릭게임, 리버시 등 다양한 게임을 즐기실 수 있습니다.
-        각 게임 링크를 클릭하시면 새로운 창에서 게임이 시작됩니다.
-        즐거운 시간 보내시길 바랍니다.
-      `;
+      const message = ` 온라인 미니 웹게임에 오신 것을 환영합니다. 이 페이지에서는 할리갈리, 틱텍토, 돌림판, 슈퍼마리오, 스피드 클릭게임, 리버시 등 다양한 게임을 즐기실 수 있습니다. 각 게임 링크를 클릭하시면 새로운 창에서 게임이 시작됩니다. 즐거운 시간 보내시길 바랍니다. `;
       const utterance = new SpeechSynthesisUtterance(message);
       utterance.lang = 'ko-KR';
       speechSynthesis.speak(utterance);
     }
   </script>
+  <!-- Google Translate Script -->
+  <script type="text/javascript">
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({ pageLanguage: 'ko' }, 'google_translate_element');
+    }
+  </script>
+  <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </head>
 <body>
   <div class="container">
     <h1>온라인 미니 웹게임</h1>
     <button class="voice-button" onclick="speakText()">🔊 음성 안내 듣기</button>
-
+    <div id="google_translate_element" style="margin-bottom: 20px;"></div>
     <p>안녕하세요. 온라인 웹게임 페이지 관리자 입니다.</p>
     <p>아래 보신 바로가기 링크들은 전부 저의 페이지 입니다.</p>
     <p>재밌게 플레이 해주셨으면 좋겠습니다. 읽어주셔서 감사합니다.</p>
-
     <h2>최신 게임 소식</h2>
     <p>new game! 바로 리버시!</p>
     <div id="news"></div>
     <p>더 즐겁게 더 행복하게! 다음 업데이트에서 만나요👋</p>
     <a href="https://github.com/yglove0305/Onlinewebgames/issues/new/choose" target="_blank" rel="noopener noreferrer">버그 신고하기</a>
     <p>ver.1.2</p>
-
     <div class="game-card">
       <a href="/games/할리갈리" target="_blank" rel="noopener noreferrer">할리갈리 게임 플레이</a>
       <a href="/games/틱텍토" target="_blank" rel="noopener noreferrer">틱텍토 게임 플레이</a>
