@@ -4,16 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>온라인 미니 웹게임</title>
+
   <!-- 보안 메타태그 -->
-  <meta http-equiv="X-Frame-Options" content="DENY">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+
   <!-- Open Graph -->
   <meta property="og:image" content="https://th.bing.com/th/id/R.f5859a57a426146fba5b5d3ad2320c57?rik=%2fSnGL%2bpqSOevmw&riu=http%3a%2f%2fwww.urbanbrush.net%2fweb%2fwp-content%2fuploads%2fedd%2f2018%2f07%2fweb-20180702122005224775.png&ehk=A6yoPOWbRKTmz2csLXwp2TvaLLA0JqHQRyyB0DeKM5g%3d&risl=&pid=ImgRaw&r=0">
   <meta property="og:title" content="온라인 미니 웹게임">
   <meta property="og:description" content="미니 웹게임을 플레이 해보실수 있습니다.">
+
   <!-- DOMPurify (XSS 방지 라이브러리) -->
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+
   <style>
     body {
       font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
@@ -98,15 +101,11 @@
       color: #666;
     }
     @media (max-width: 600px) {
-      h1 {
-        font-size: 2em;
-      }
-      a {
-        padding: 10px 18px;
-        font-size: 0.95em;
-      }
+      h1 { font-size: 2em; }
+      a { padding: 10px 18px; font-size: 0.95em; }
     }
   </style>
+
   <script>
     // 클릭재킹 방지
     if (window.top !== window.self) {
@@ -117,7 +116,11 @@
     const observer = new MutationObserver(() => {
       console.warn("DOM 변경 감지됨! 보안 점검 필요");
     });
-    observer.observe(document.documentElement, { attributes: true, childList: true, subtree: true });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      childList: true,
+      subtree: true
+    });
 
     // 안전한 HTML 삽입 함수
     function safeInsert(id, html) {
@@ -131,19 +134,12 @@
 
     // 음성 안내 기능
     function speakText() {
-      const message = ` 온라인 미니 웹게임에 오신 것을 환영합니다. 이 페이지에서는 할리갈리, 틱텍토, 돌림판, 슈퍼마리오, 스피드 클릭게임, 리버시 등 다양한 게임을 즐기실 수 있습니다. 각 게임 링크를 클릭하시면 새로운 창에서 게임이 시작됩니다. 즐거운 시간 보내시길 바랍니다. `;
+      const message = `온라인 미니 웹게임에 오신 것을 환영합니다. 이 페이지에서는 할리갈리, 틱텍토, 돌림판, 슈퍼마리오, 스피드 클릭게임, 리버시 등 다양한 게임을 즐기실 수 있습니다. 각 게임 링크를 클릭하시면 새로운 창에서 게임이 시작됩니다. 즐거운 시간 보내시길 바랍니다.`;
       const utterance = new SpeechSynthesisUtterance(message);
       utterance.lang = 'ko-KR';
       speechSynthesis.speak(utterance);
     }
   </script>
-  <!-- Google Translate Script -->
-  <script type="text/javascript">
-    function googleTranslateElementInit() {
-      new google.translate.TranslateElement({ pageLanguage: 'ko' }, 'google_translate_element');
-    }
-  </script>
-  <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </head>
 <body>
   <div class="container">
