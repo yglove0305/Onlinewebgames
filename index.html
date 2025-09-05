@@ -2,168 +2,85 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>온라인 미니 웹게임</title>
-
-  <!-- 보안 메타태그 -->
-  <meta http-equiv="X-Content-Type-Options" content="nosniff">
-  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
-
-  <!-- Open Graph -->
-  <meta property="og:image" content="https://videos.openai.com/vg-assets/assets%2Ftask_01k3wwj414epnavqd365pb5wcz%2F1756537421_img_1.webp?st=2025-08-30T05%3A09%3A44Z&se=2025-09-05T06%3A09%3A44Z&sks=b&skt=2025-08-30T05%3A09%3A44Z&ske=2025-09-05T06%3A09%3A44Z&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skoid=5e5fc900-07cf-43e7-ab5b-314c0d877bb0&skv=2019-02-02&sv=2018-11-09&sr=b&sp=r&spr=https%2Chttp&sig=r%2BGcQKZg%2BmnP%2BzBWc3CQe7buvXMWv3t6xcPFfELCpMM%3D&az=oaivgprodscus">
-  <meta property="og:title" content="온라인 미니 웹게임">
-  <meta property="og:description" content="미니 웹게임을 플레이 해보실수 있습니다.">
-
-  <!-- DOMPurify (XSS 방지 라이브러리) -->
-  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>도메인 변경 안내</title>
   <style>
     body {
-      font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
-      background: linear-gradient(180deg, #f9fbfd, #e6f0ff);
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f4f4;
+      color: #333;
+      line-height: 1.6;
       margin: 0;
       padding: 0;
-      color: #333;
     }
     .container {
       max-width: 800px;
-      margin: auto;
-      padding: 20px;
-      text-align: center;
+      margin: 50px auto;
+      background: white;
+      padding: 40px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border-radius: 8px;
     }
     h1 {
-      font-size: 2.5em;
-      font-weight: bold;
-      color: #007bff;
-      margin: 20px 0;
-      text-shadow: 1px 1px 3px rgba(0, 123, 255, 0.2);
-    }
-    p {
-      font-size: 1.1em;
-      line-height: 1.6;
-      margin-bottom: 15px;
-    }
-    .separator {
-      font-size: 1.5em;
-      color: #ccc;
-      margin: 20px 0;
+      color: #2c3e50;
+      font-size: 2em;
+      margin-bottom: 20px;
     }
     a {
-      display: inline-block;
+      color: #2980b9;
       text-decoration: none;
-      color: #fff;
-      background: linear-gradient(135deg, #007bff, #00c6ff);
-      padding: 12px 24px;
-      border-radius: 8px;
-      font-weight: bold;
-      box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-      margin: 10px;
-      transition: all 0.3s ease;
     }
     a:hover {
-      background: linear-gradient(135deg, #0056b3, #0099cc);
-      transform: translateY(-3px) scale(1.03);
-      box-shadow: 0 6px 18px rgba(0, 123, 255, 0.4);
+      text-decoration: underline;
     }
-    a:active {
-      transform: translateY(0px) scale(0.98);
-    }
-    .game-card {
-      background: #fff;
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.05);
-      margin-bottom: 20px;
-      transition: box-shadow 0.3s ease, transform 0.3s ease;
-    }
-    .game-card:hover {
-      box-shadow: 0 6px 15px rgba(0,0,0,0.1);
-      transform: translateY(-5px);
-    }
-    .voice-button {
-      margin: 15px auto;
-      padding: 10px 20px;
-      font-size: 1em;
-      background-color: #28a745;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
-      transition: background-color 0.3s ease;
-    }
-    .voice-button:hover {
-      background-color: #218838;
+    .highlight {
+      background-color: #eaf6ff;
+      padding: 10px;
+      border-left: 5px solid #3498db;
+      margin: 20px 0;
     }
     footer {
       margin-top: 40px;
       font-size: 0.9em;
-      color: #666;
-    }
-    @media (max-width: 600px) {
-      h1 { font-size: 2em; }
-      a { padding: 10px 18px; font-size: 0.95em; }
+      color: #777;
+      text-align: center;
     }
   </style>
-
-  <script>
-    // 클릭재킹 방지
-    if (window.top !== window.self) {
-      window.top.location = window.self.location;
-    }
-
-    // DOM 변조 감시
-    const observer = new MutationObserver(() => {
-      console.warn("DOM 변경 감지됨! 보안 점검 필요");
-    });
-    observer.observe(document.documentElement, {
-      attributes: true,
-      childList: true,
-      subtree: true
-    });
-
-    // 안전한 HTML 삽입 함수
-    function safeInsert(id, html) {
-      document.getElementById(id).innerHTML = DOMPurify.sanitize(html);
-    }
-
-    // 페이지 로드 시 안전하게 뉴스 삽입
-    document.addEventListener("DOMContentLoaded", () => {
-      safeInsert("news", "<p>시각장애인 음성 도우미 기능을 추가했습니다.</p>");
-    });
-
-    // 음성 안내 기능
-    function speakText() {
-      const message = `온라인 미니 웹게임에 오신 것을 환영합니다. 이 페이지에서는 할리갈리, 틱텍토, 돌림판, 슈퍼마리오, 스피드 클릭게임, 리버시 등 다양한 게임을 즐기실 수 있습니다. 각 게임 링크를 클릭하시면 새로운 창에서 게임이 시작됩니다. 즐거운 시간 보내시길 바랍니다.`;
-      const utterance = new SpeechSynthesisUtterance(message);
-      utterance.lang = 'ko-KR';
-      speechSynthesis.speak(utterance);
-    }
-  </script>
 </head>
 <body>
   <div class="container">
-    <h1>온라인 미니 웹게임</h1>
-    <button class="voice-button" onclick="speakText()">🔊 음성 안내 듣기</button>
-    <p>안녕하세요. 온라인 웹게임 페이지 관리자 입니다.</p>
-    <p>아래 보신 바로가기 링크들은 전부 저의 페이지 입니다.</p>
-    <p>재밌게 플레이 해주셨으면 좋겠습니다. 읽어주셔서 감사합니다.</p>
-    <h2>최신 게임 소식</h2>
-    <p>new game! 바로 리버시!</p>
-    <div id="news"></div>
-    <p>더 즐겁게 더 행복하게! 다음 업데이트에서 만나요👋</p>
-    <a href="https://github.com/yglove0305/Onlinewebgames/issues/new/choose" target="_blank" rel="noopener noreferrer">버그 신고하기</a>
-    <p>ver.1.2</p>
-    <div class="game-card">
-      <a href="/games/할리갈리" target="_blank" rel="noopener noreferrer">할리갈리 게임 플레이</a>
-      <a href="/games/틱텍토" target="_blank" rel="noopener noreferrer">틱텍토 게임 플레이</a>
-      <p class="separator">ㅡㅡ</p>
-      <a href="/games/돌림판" target="_blank" rel="noopener noreferrer">돌림판 게임 플레이</a>
-      <a href="/games/슈퍼마리오" target="_blank" rel="noopener noreferrer">슈퍼마리오 게임 플레이</a>
-      <p class="separator">ㅡㅡ</p>
-      <a href="/games/터치게임" target="_blank" rel="noopener noreferrer">스피드 클릭게임 플레이</a>
-      <a href="/games/리버시게임" target="_blank" rel="noopener noreferrer">리버시 게임 플레이</a>
+    <h1>📢 도메인 변경 안내</h1>
+    <p>안녕하세요, 저희 웹사이트를 방문해주셔서 감사합니다.</p>
+    <p>보다 안정적인 서비스 제공과 사용자 경험 향상을 위해 웹사이트의 도메인이 아래와 같이 변경되었습니다.</p>
+
+    <div class="highlight">
+      <strong>새로운 도메인 주소:</strong><br>
+      <a href="https://onlinewebgames.w3spaces.com/" target="_blank">https://onlinewebgames.w3spaces.com/</a>
     </div>
+
+    <p>기존 도메인은 더 이상 사용되지 않으며, 앞으로는 위의 새로운 주소를 통해 접속해주시기 바랍니다.</p>
+
+    <h2>🔧 변경 이유</h2>
+    <ul>
+      <li>더 빠르고 안정적인 웹 호스팅 환경 제공</li>
+      <li>보안 강화 및 HTTPS 지원</li>
+      <li>모바일 및 다양한 기기에서의 호환성 개선</li>
+    </ul>
+
+    <h2>📌 즐겨찾기 업데이트 방법</h2>
+    <p>기존 도메인을 즐겨찾기에 등록하셨다면, 아래 방법을 참고하여 새로운 주소로 업데이트해주세요:</p>
+    <ol>
+      <li>브라우저의 즐겨찾기 또는 북마크 메뉴로 이동</li>
+      <li>기존 항목 삭제 또는 수정</li>
+      <li><strong>https://onlinewebgames.w3spaces.com/</strong> 주소를 새로 등록</li>
+    </ol>
+
+    <h2>💬 문의사항</h2>
+    <p>도메인 변경과 관련하여 궁금하신 점이나 불편 사항이 있으시면 언제든지 <a href="mailto:support@onlinewebgames.w3spaces.com">support@onlinewebgames.w3spaces.com</a> 으로 문의해주세요.</p>
+
+    <footer>
+      &copy; 2025 Online Web Games. 모든 권리 보유.
+    </footer>
   </div>
 </body>
 </html>
