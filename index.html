@@ -1,86 +1,729 @@
+
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko-KR" dir="ltr">
 <head>
+  <!--
+    ========== 문서 메타 ==========
+    - lang, dir 지정으로 스크린리더 및 레이아웃 엔진 힌트 제공
+    - 뷰포트/문자셋/색상체계/테마색 설정
+  -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>도메인 변경 안내</title>
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#0a74ff">
+
+  <title>온라인 미니 웹게임 | 할리갈리 · 틱택토 · 리버시 등</title>
+  <meta name="description" content="온라인 미니 웹게임에서 할리갈리, 틱택토, 돌림판, 슈퍼마리오, 스피드 클릭게임, 리버시 등을 바로 플레이하세요. 음성 안내와 키보드 접근성을 지원합니다.">
+  <meta name="keywords" content="온라인 게임, 웹게임, 미니게임, 할리갈리, 틱택토, 리버시, 슈퍼마리오, 돌림판, 클릭게임, 접근성, 시각장애인 지원">
+  <meta name="author" content="온라인 미니 웹게임 관리자">
+
+  <!--
+    ========== 보안 메타 ==========
+    - Referrer-Policy: 민감 URL 유출 최소화
+    - X-Content-Type-Options: MIME 스니핑 방지
+    - NOTE: 강력한 CSP는 서버 헤더로 제공하는 것이 권장됩니다.
+            여기서는 meta CSP 샘플을 제시합니다. nonce 값은 서버에서 매 요청마다 무작위 생성하세요.
+  -->
+  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self' https:;
+    img-src 'self' https: data:;
+    style-src 'self' 'unsafe-inline' https:;
+    font-src 'self' https: data:;
+    script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline';
+    connect-src 'self' https:;
+    frame-ancestors 'none';
+    base-uri 'self';
+    form-action 'self' https://github.com;
+  ">
+
+  <!--
+    ========== Open Graph / Twitter Cards ==========
+    - 공유 시 미리보기 정보
+    - 이미지 URL은 만료될 수 있으므로, 가능하면 고정 경로 사용 권장
+  -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="온라인 미니 웹게임">
+  <meta property="og:description" content="할리갈리, 틱택토, 리버시 등 다양한 미니 웹게임을 지금 플레이하세요.">
+  <meta property="og:url" content="https://onlinewebgames.netlify.app/">
+  <meta property="og:image" content="https://videos.openai.com/vg-assets/assets%2Ftask_01k3wwj414epnavqd365pb5wcz%2F1756537421_img_1.webp">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <!--
+    ========== PWA/아이콘(선택) ==========
+    - manifest, 아이콘 경로를 프로젝트에 맞게 교체
+  -->
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="icon" href="/icons/favicon.ico">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+
+  <!--
+    ========== 성능 힌트 ==========
+  -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+
+  <!-- DOMPurify (XSS 방지 라이브러리) -->
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js" integrity="sha384-uk6Qf6QG2xC3owk97lC3w9vfmqJXqXfI6ZQp8X3g2dGJxq8Wq6E8v4t4o5zV9Dk7" crossorigin="anonymous"></script>
+
+  <!--
+    ========== 스타일 ==========
+    - prefers-reduced-motion 대응
+    - 다크 모드 자동 테마
+    - 키보드 포커스 가시성 강화
+  -->
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f4f4f4;
-      color: #333;
-      line-height: 1.6;
-      margin: 0;
-      padding: 0;
+    :root {
+      --bg-grad-top: #f9fbfd;
+      --bg-grad-bottom: #e6f0ff;
+      --text: #222;
+      --muted: #666;
+      --brand: #0a74ff;
+      --brand-2: #00c6ff;
+      --success: #28a745;
+      --card-bg: #fff;
+      --border: #e5e8ee;
+      --shadow: 0 3px 8px rgba(0,0,0,0.06);
+      --shadow-strong: 0 8px 24px rgba(0,0,0,0.12);
+      --radius: 12px;
+      --focus: 2px solid #ffb703;
     }
-    .container {
-      max-width: 800px;
-      margin: 50px auto;
-      background: white;
-      padding: 40px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-grad-top: #0f1522;
+        --bg-grad-bottom: #0a0f1a;
+        --text: #e9eef9;
+        --muted: #aab3c5;
+        --brand: #5aa0ff;
+        --brand-2: #3dd8ff;
+        --success: #3bbf6b;
+        --card-bg: #131a27;
+        --border: #223049;
+        --shadow: 0 3px 10px rgba(0,0,0,0.5);
+        --shadow-strong: 0 12px 28px rgba(0,0,0,0.55);
+      }
+    }
+
+    /* 페이지 기본 */
+    html, body {
+      height: 100%;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', 'Malgun Gothic', system-ui, -apple-system, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: linear-gradient(180deg, var(--bg-grad-top), var(--bg-grad-bottom));
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
+    /* 키보드 사용자 스킵 링크 */
+    .skip-link {
+      position: absolute;
+      left: -9999px;
+      top: auto;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+    }
+    .skip-link:focus {
+      position: fixed;
+      left: 16px;
+      top: 14px;
+      width: auto;
+      height: auto;
+      padding: 10px 14px;
+      z-index: 10000;
+      background: #000;
+      color: #fff;
+      border-radius: 8px;
+      outline: var(--focus);
+    }
+
+    /* 레이아웃 */
+    header {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+    .brand__logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--brand), var(--brand-2));
+      box-shadow: var(--shadow);
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .nav-link {
+      display: inline-block;
+      text-decoration: none;
+      color: #fff;
+      background: linear-gradient(135deg, var(--brand), var(--brand-2));
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .nav-link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(0, 123, 255, 0.35);
+    }
+    .nav-link:focus-visible {
+      outline: var(--focus);
+    }
+
+    main {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 8px 20px 40px;
+    }
+    .hero {
+      text-align: center;
+      margin: 12px auto 24px;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 3.8vw, 2.6rem);
+      line-height: 1.2;
+      margin: 18px 0 10px;
+      color: var(--brand);
+      text-shadow: 1px 1px 3px rgba(10, 116, 255, 0.20);
+    }
+    .hero p {
+      margin: 6px auto 0;
+      font-size: 1.05rem;
+      color: var(--muted);
+      max-width: 720px;
+    }
+
+    /* 버튼 공통 */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+      color: #fff;
+      background: linear-gradient(135deg, var(--brand), var(--brand-2));
+      padding: 12px 20px;
+      border: 0;
+      border-radius: 12px;
+      font-weight: 800;
+      box-shadow: 0 6px 16px rgba(0, 123, 255, 0.30);
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    }
+    .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 24px rgba(0, 123, 255, 0.35);
+    }
+    .btn:active {
+      transform: translateY(0) scale(0.98);
+    }
+    .btn:focus-visible {
+      outline: var(--focus);
+    }
+    .btn--success {
+      background: linear-gradient(135deg, var(--success), #42d77b);
+      box-shadow: 0 6px 16px rgba(40, 167, 69, 0.30);
+    }
+
+    /* 카드/그리드 */
+    .section {
+      margin-top: 28px;
+    }
+    .section__header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .section__title {
+      font-size: 1.6rem;
+      margin: 0;
+      color: var(--text);
+    }
+    .section__desc {
+      margin: 4px 0 14px;
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+    @media (max-width: 720px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-strong);
+      border-color: rgba(10,116,255,0.25);
+    }
+    .card__title {
+      margin: 0;
+      font-size: 1.12rem;
+      letter-spacing: 0.1px;
+    }
+    .card__meta {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .card__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    /* 구분선 */
+    .separator {
+      display: block;
+      width: 100%;
+      text-align: center;
+      color: #b9c1d1;
+      margin: 16px 0;
+      user-select: none;
+    }
+
+    /* 알림/라이브 영역 */
+    .news {
+      margin-top: 10px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: rgba(10,116,255,0.08);
+      border: 1px dashed rgba(10,116,255,0.35);
+      color: var(--text);
+    }
+
+    /* 푸터 */
+    footer {
+      max-width: 1040px;
+      margin: 22px auto 40px;
+      padding: 20px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* 포커스 링 일관성 */
+    :focus-visible {
+      outline: var(--focus);
+      outline-offset: 2px;
       border-radius: 8px;
     }
-    h1 {
-      color: #2c3e50;
-      font-size: 2em;
-      margin-bottom: 20px;
-    }
-    a {
-      color: #2980b9;
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-    .highlight {
-      background-color: #eaf6ff;
-      padding: 10px;
-      border-left: 5px solid #3498db;
-      margin: 20px 0;
-    }
-    footer {
-      margin-top: 40px;
-      font-size: 0.9em;
-      color: #777;
-      text-align: center;
+
+    /* 모션 최소화 지원 */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+      }
     }
   </style>
+
+  <!--
+    ========== 접근성/보조 기능 스크립트 ==========
+    - 음성 안내: 지원 탐지, 중복 재생 방지, 중단 버튼, 상태 라벨
+    - DOM 변조 감시: 스로틀링
+    - 안전 삽입: DOMPurify 활용
+    - 클릭재킹 방지
+    - 키보드 내비게이션 강화
+  -->
+  <script>
+    // 클릭재킹 방지 (프레임 차단)
+    if (window.top !== window.self) {
+      try {
+        window.top.location = window.self.location;
+      } catch (e) {
+        window.location.href = window.location.href;
+      }
+    }
+
+    // 도우미: 스로틀 유틸
+    const throttle = (fn, wait = 500) => {
+      let last = 0;
+      return (...args) => {
+        const now = Date.now();
+        if (now - last >= wait) {
+          last = now;
+          fn.apply(null, args);
+        }
+      };
+    };
+
+    // DOM 변조 감시(감지 로그)
+    const mutationObserver = new MutationObserver(
+      throttle(() => {
+        console.warn("[보안] DOM 변경 감지됨 — 필요 시 무결성 점검을 수행하세요.");
+      }, 3000)
+    );
+    mutationObserver.observe(document.documentElement, {
+      attributes: true,
+      childList: true,
+      subtree: true
+    });
+
+    // 안전한 HTML 삽입
+    function safeInsert(id, html) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const sanitized = DOMPurify.sanitize(html, {
+        ALLOWED_TAGS: ['p', 'strong', 'em', 'a', 'br', 'ul', 'ol', 'li', 'span'],
+        ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'aria-label']
+      });
+      el.innerHTML = sanitized;
+    }
+
+    // 음성 안내 (Web Speech API)
+    const VoiceGuide = (() => {
+      let speaking = false;
+      let current;
+
+      const canSpeak = () => 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+
+      function speak(message, lang = 'ko-KR', rate = 1, pitch = 1) {
+        if (!canSpeak()) {
+          announceStatus("이 브라우저는 음성 안내를 지원하지 않습니다.");
+          return;
+        }
+        stop(); // 중복 재생 방지
+        current = new SpeechSynthesisUtterance(message);
+        current.lang = lang;
+        current.rate = rate;
+        current.pitch = pitch;
+        current.onstart = () => {
+          speaking = true;
+          updateToggles(true);
+          announceStatus("음성 안내를 재생합니다.");
+        };
+        current.onend = () => {
+          speaking = false;
+          updateToggles(false);
+          announceStatus("음성 안내가 종료되었습니다.");
+        };
+        current.onerror = () => {
+          speaking = false;
+          updateToggles(false);
+          announceStatus("음성 안내 중 오류가 발생했습니다.");
+        };
+        window.speechSynthesis.speak(current);
+      }
+
+      function stop() {
+        if (!canSpeak()) return;
+        try {
+          window.speechSynthesis.cancel();
+          speaking = false;
+          updateToggles(false);
+        } catch {}
+      }
+
+      function isSpeaking() {
+        return speaking;
+      }
+
+      function updateToggles(isOn) {
+        const btn = document.getElementById('voice-toggle');
+        const stopBtn = document.getElementById('voice-stop');
+        if (btn) {
+          btn.setAttribute('aria-pressed', String(isOn));
+          btn.textContent = isOn ? "🔊 음성 안내 재생 중…" : "🔊 음성 안내 듣기";
+        }
+        if (stopBtn) {
+          stopBtn.disabled = !isOn;
+        }
+      }
+
+      function announceStatus(text) {
+        const live = document.getElementById('live-region');
+        if (live) {
+          live.textContent = text;
+          // 같은 메시지 연속 갱신 시 보장
+          setTimeout(() => live.textContent = text, 10);
+        }
+      }
+
+      return { speak, stop, isSpeaking, canSpeak };
+    })();
+
+    // 초기화
+    document.addEventListener('DOMContentLoaded', () => {
+      // 뉴스 안전 삽입
+      safeInsert("news", `
+        <p><strong>접근성 업데이트:</strong> 시각장애인 음성 도우미를 개선했습니다. 키보드 <em>Tab</em>만으로 모든 요소 탐색이 가능합니다.</p>
+      `);
+
+      // 음성 안내 버튼 바인딩
+      const toggleBtn = document.getElementById('voice-toggle');
+      const stopBtn = document.getElementById('voice-stop');
+
+      const guideText = [
+        "온라인 미니 웹게임에 오신 것을 환영합니다.",
+        "이 페이지에서는 할리갈리, 틱택토, 돌림판, 슈퍼마리오, 스피드 클릭게임, 리버시 등 다양한 게임을 즐기실 수 있습니다.",
+        "각 게임 링크를 클릭하시면 새로운 창에서 게임이 시작됩니다.",
+        "즐거운 시간 보내시길 바랍니다."
+      ].join(" ");
+
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+          if (!VoiceGuide.canSpeak()) {
+            alert("현재 브라우저에서는 음성 안내가 지원되지 않습니다.");
+            return;
+          }
+          if (VoiceGuide.isSpeaking()) {
+            // 이미 재생 중이면 처음부터 다시
+            VoiceGuide.stop();
+            VoiceGuide.speak(guideText);
+          } else {
+            VoiceGuide.speak(guideText);
+          }
+        });
+      }
+
+      if (stopBtn) {
+        stopBtn.addEventListener('click', () => VoiceGuide.stop());
+      }
+
+      // 키보드 포커스 스타일 접근성 향상 (마우스 클릭 시 포커스링 억제)
+      function handleMouseDown() { document.body.classList.add('using-mouse'); }
+      function handleKeyDown(e) { if (e.key === 'Tab') document.body.classList.remove('using-mouse'); }
+      document.addEventListener('mousedown', handleMouseDown);
+      document.addEventListener('keydown', handleKeyDown);
+
+      // 해시 이동 시 메인에 포커스
+      if (window.location.hash) {
+        const main = document.querySelector('main');
+        if (main) { main.setAttribute('tabindex', '-1'); main.focus(); }
+      }
+    });
+  </script>
 </head>
 <body>
-  <div class="container">
-    <h1>📢 도메인 변경 안내</h1>
-    <p>안녕하세요, 저희 웹사이트를 방문해주셔서 감사합니다.</p>
-    <p>보다 안정적인 서비스 제공과 사용자 경험 향상을 위해 웹사이트의 도메인이 아래와 같이 변경되었습니다.</p>
+  <!-- 스킵 링크 -->
+  <a class="skip-link" href="#main">본문으로 건너뛰기</a>
 
-    <div class="highlight">
-      <strong>새로운 도메인 주소:</strong><br>
-      <a href="https://onlinewebgames.w3spaces.com/" target="_blank">https://onlinewebgames.w3spaces.com/</a>
+  <!-- 헤더/내비게이션 -->
+  <header role="banner" aria-label="사이트 헤더">
+    <a class="brand" href="/" aria-label="온라인 미니 웹게임 홈으로 이동">
+      <span class="brand__logo" aria-hidden="true"></span>
+      <span>온라인 미니 웹게임</span>
+    </a>
+    <nav aria-label="주 내비게이션">
+      <a class="nav-link" href="https://github.com/yglove0305/Onlinewebgames/issues/new/choose" target="_blank" rel="noopener noreferrer" aria-label="새 창에서 버그 신고 양식 열기">버그 신고</a>
+      <a class="nav-link" href="#games" aria-label="게임 목록 섹션으로 이동">게임 목록</a>
+    </nav>
+  </header>
+
+  <!-- 메인 -->
+  <main id="main" role="main">
+    <section class="hero" aria-labelledby="page-title">
+      <h1 id="page-title">온라인 미니 웹게임</h1>
+      <p>재밌고 가벼운 웹게임을 한곳에 모았습니다. 키보드와 스크린리더를 포함한 접근성을 지원합니다.</p>
+      <div style="margin-top: 12px; display: inline-flex; gap: 10px; flex-wrap: wrap;">
+        <button id="voice-toggle" class="btn btn--success" type="button" aria-pressed="false" aria-describedby="voice-help">🔊 음성 안내 듣기</button>
+        <button id="voice-stop" class="btn" type="button" disabled aria-label="음성 안내 중지">⏹️ 중지</button>
+      </div>
+      <div id="voice-help" class="section__desc" style="margin-top:8px;">
+        음성 안내는 한국어로 제공됩니다. 재생 중 다시 누르면 처음부터 다시 안내합니다.
+      </div>
+      <!-- 스크린리더 라이브 영역 -->
+      <div id="live-region" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
+      <style>
+        .visually-hidden {
+          position: absolute !important;
+          width: 1px; height: 1px;
+          margin: -1px; padding: 0; border: 0;
+          clip: rect(0 0 0 0);
+          clip-path: inset(50%);
+          overflow: hidden; white-space: nowrap;
+        }
+      </style>
+    </section>
+
+    <!-- 최신 소식 -->
+    <section class="section" aria-labelledby="news-title">
+      <div class="section__header">
+        <h2 id="news-title" class="section__title">최신 게임 소식</h2>
+        <span aria-label="현재 버전">ver. 1.3</span>
+      </div>
+      <p class="section__desc">고급 디자인 업데이트와 도메인을 변경했습니다</strong>! 더 즐겁게, 더 행복하게 — 다음 업데이트에서 만나요 👋</p>
+      <div id="news" class="news" role="status" aria-live="polite"></div>
+    </section>
+
+    <span class="separator" aria-hidden="true">— —</span>
+
+    <!-- 게임 목록 -->
+    <section id="games" class="section" aria-labelledby="games-title">
+      <h2 id="games-title" class="section__title">게임 목록</h2>
+      <p class="section__desc">모든 링크는 새 창에서 열립니다. 각 게임은 터치/마우스/키보드를 지원합니다.</p>
+
+      <div class="grid" role="list">
+        <!-- 할리갈리 -->
+        <article class="card" role="listitem" aria-labelledby="game-halligalli-title">
+          <h3 id="game-halligalli-title" class="card__title">할리갈리</h3>
+          <p class="card__meta">과일 카드가 5개일 때 벨을 누르는 반사 신경 게임</p>
+          <div class="card__actions">
+            <a class="btn"
+               href="https://onlinewebgames.netlify.app/games/할리갈리"
+               target="_blank"
+               rel="noopener noreferrer"
+               aria-label="새 창에서 할리갈리 게임 플레이">
+               🍓 플레이
+            </a>
+          </div>
+        </article>
+
+        <!-- 틱택토 -->
+        <article class="card" role="listitem" aria-labelledby="game-tictactoe-title">
+          <h3 id="game-tictactoe-title" class="card__title">틱택토</h3>
+          <p class="card__meta">3×3 보드에 OX를 놓아 한 줄을 완성하세요</p>
+          <div class="card__actions">
+            <a class="btn"
+               href="https://onlinewebgames.netlify.app/games/틱텍토"
+               target="_blank"
+               rel="noopener noreferrer"
+               aria-label="새 창에서 틱택토 게임 플레이">
+               ⭕❌ 플레이
+            </a>
+          </div>
+        </article>
+
+        <!-- 돌림판 -->
+        <article class="card" role="listitem" aria-labelledby="game-wheel-title">
+          <h3 id="game-wheel-title" class="card__title">돌림판</h3>
+          <p class="card__meta">공정한 랜덤 선택이 필요한 순간에!</p>
+          <div class="card__actions">
+            <a class="btn"
+               href="https://onlinewebgames.netlify.app/games/돌림판"
+               target="_blank"
+               rel="noopener noreferrer"
+               aria-label="새 창에서 돌림판 게임 플레이">
+               🎯 플레이
+            </a>
+          </div>
+        </article>
+
+        <!-- 슈퍼마리오 -->
+        <article class="card" role="listitem" aria-labelledby="game-mario-title">
+          <h3 id="game-mario-title" class="card__title">슈퍼마리오</h3>
+          <p class="card__meta">클래식 플랫폼 액션, 점프와 타이밍의 조합</p>
+          <div class="card__actions">
+            <a class="btn"
+               href="https://onlinewebgames.netlify.app/games/슈퍼마리오"
+               target="_blank"
+               rel="noopener noreferrer"
+               aria-label="새 창에서 슈퍼마리오 게임 플레이">
+               🍄 플레이
+            </a>
+          </div>
+        </article>
+
+        <!-- 스피드 클릭 -->
+        <article class="card" role="listitem" aria-labelledby="game-speedclick-title">
+          <h3 id="game-speedclick-title" class="card__title">스피드 클릭게임</h3>
+          <p class="card__meta">제한 시간 안에 가능한 많이 클릭하세요</p>
+          <div class="card__actions">
+            <a class="btn"
+               href="https://onlinewebgames.netlify.app/games/터치게임"
+               target="_blank"
+               rel="noopener noreferrer"
+               aria-label="새 창에서 스피드 클릭게임 플레이">
+               ⚡ 플레이
+            </a>
+          </div>
+        </article>
+
+        <!-- 리버시 -->
+        <article class="card" role="listitem" aria-labelledby="game-reversi-title">
+          <h3 id="game-reversi-title" class="card__title">리버시</h3>
+          <p class="card__meta">전략 보드게임의 정석, 마지막 한 수까지 집중!</p>
+          <div class="card__actions">
+            <a class="btn"
+               href="https://onlinewebgames.netlify.app/games/리버시게임"
+               target="_blank"
+               rel="noopener noreferrer"
+               aria-label="새 창에서 리버시 게임 플레이">
+               ♟️ 플레이
+            </a>
+          </div>
+        </article>
+
+        <article class="card" role="listitem" aria-labelledby="game-reversi-title">
+          <h3 id="game-reversi-title" class="card__title">ak47</h3>
+          <p class="card__meta">총싸움 </p>
+          <div class="card__actions">
+            <a class="btn"
+               href="https://onlinewebgames.netlify.app/games/ak47"
+               target="_blank"
+               rel="noopener noreferrer"
+               aria-label="새 창에서 ak47 게임 플레이">
+               ♟️ 플레이
+            </a>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <!-- 푸터 -->
+  <footer role="contentinfo" aria-label="사이트 정보">
+    <div>
+      <strong>문의/피드백:</strong>
+      <a href="https://github.com/yglove0305/Onlinewebgames/issues/new/choose" target="_blank" rel="noopener noreferrer">GitHub 이슈</a>
     </div>
+    <div style="margin-top:8px;">
+      <span>© 온라인 미니 웹게임</span> ·
+      <span>버전 1.2</span> ·
+      <span>접근성 지원: 키보드 내비게이션, 스크린리더, 모션 최소화</span>
+    </div>
+  </footer>
 
-    <p>기존 도메인은 더 이상 사용되지 않으며, 앞으로는 위의 새로운 주소를 통해 접속해주시기 바랍니다.</p>
-
-    <h2>🔧 변경 이유</h2>
-    <ul>
-      <li>더 빠르고 안정적인 웹 호스팅 환경 제공</li>
-      <li>보안 강화 및 HTTPS 지원</li>
-      <li>모바일 및 다양한 기기에서의 호환성 개선</li>
-    </ul>
-
-    <h2>📌 즐겨찾기 업데이트 방법</h2>
-    <p>기존 도메인을 즐겨찾기에 등록하셨다면, 아래 방법을 참고하여 새로운 주소로 업데이트해주세요:</p>
-    <ol>
-      <li>브라우저의 즐겨찾기 또는 북마크 메뉴로 이동</li>
-      <li>기존 항목 삭제 또는 수정</li>
-      <li><strong>https://onlinewebgames.w3spaces.com/</strong> 주소를 새로 등록</li>
-    </ol>
-
-    <h2>💬 문의사항</h2>
-    <p>도메인 변경과 관련하여 궁금하신 점이나 불편 사항이 있으시면 언제든지 <a href="mailto:support@onlinewebgames.w3spaces.com">support@onlinewebgames.w3spaces.com</a> 으로 문의해주세요.</p>
-
-    <footer>
-      &copy; 2025 Online Web Games. 모든 권리 보유.
-    </footer>
-  </div>
+  <!-- 선택: Service Worker 등록 (오프라인/캐시). 실제 sw.js 구현 후 주석 해제 -->
+  <!--
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .catch(err => console.warn('SW 등록 실패', err));
+      });
+    }
+  </script>
+  -->
 </body>
 </html>
